@@ -1,0 +1,14 @@
+{
+    "name": "com.giorgiokalmund.dora",
+    "rootNamespace": "giorgiokalmund.Dora",
+    "references": [ "DyrdaDev.SpaceFoundationSystemForUnity.Runtime" ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
