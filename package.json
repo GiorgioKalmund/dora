@@ -1,0 +1,13 @@
+{
+  "name": "com.giorgiokalmund.dora",
+  "version": "1.0.0",
+  "displayName": "Dora",
+  "description": "Exploration-based questing system with procedural generation and dynamic constraints.",
+  "unity": "6.0",
+  "author": {
+    "name": "Giorgio Kalmund"
+  },
+  "dependencies": {
+    "com.unity.visualscripting" : "1.9.8"
+  }
+}
