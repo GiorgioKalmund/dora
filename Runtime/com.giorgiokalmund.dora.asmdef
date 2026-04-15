@@ -1,7 +1,10 @@
 {
     "name": "com.giorgiokalmund.dora",
     "rootNamespace": "giorgiokalmund.Dora",
-    "references": [ "DyrdaDev.SpaceFoundationSystemForUnity.Runtime" ],
+    "references": [
+        "DyrdaDev.SpaceFoundationSystemForUnity.Runtime",
+        "com.codinghelmet.optional"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
