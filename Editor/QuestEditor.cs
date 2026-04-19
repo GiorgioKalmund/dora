@@ -19,15 +19,6 @@ namespace giorgiokalmund.Dora.Editor
             Quest quest = (Quest)target;
             DrawDefaultInspector();
 
-            #region Styles
-            var richText = new GUIStyle(EditorStyles.label) { richText = true, wordWrap = true};
-            var okText = new GUIStyle(richText);
-            okText.normal.textColor = Color.green;
-            var warningText = new GUIStyle(richText);
-            warningText.normal.textColor = Color.orange;
-            var errorText = new GUIStyle(richText);
-            errorText.normal.textColor = Color.red;
-            #endregion
             
             InternalErrorMessages = quest.GetInternalValidationResult();
 
@@ -77,41 +68,41 @@ namespace giorgiokalmund.Dora.Editor
                 if (quest.BaseRequirements)
                 {
                     EditorGUILayout.Separator();
-                    GUILayout.Label("<b>BASE REQUIREMENT</b>", richText);
+                    GUILayout.Label("<b>BASE REQUIREMENT</b>", QuestDrawer.RichText);
                     if (!quest.BaseRequirements.CanBeAchieved)
-                        richText.normal.textColor = disabledColor;
-                    GUILayout.Label($"{quest.BaseRequirements.GetDescription()}", richText);
-                    richText.normal.textColor = defaultColor;
+                        QuestDrawer.RichText.normal.textColor = disabledColor;
+                    GUILayout.Label($"{quest.BaseRequirements.GetDescription()}", QuestDrawer.RichText);
+                    QuestDrawer.RichText.normal.textColor = defaultColor;
                 }
                 
                 if (quest.Steps?.Length > 0)
                 {
                     EditorGUILayout.Separator();
-                    GUILayout.Label("<b>STEP OVERVIEW</b>", richText);
+                    GUILayout.Label("<b>STEP OVERVIEW</b>", QuestDrawer.RichText);
                     for (var i = 0; i < quest.Steps.Length; i++)
                     {
                         if (!quest.Steps[i].IsCompleted)
-                            richText.normal.textColor = disabledColor;
-                        GUILayout.Label($"{i+1}) {quest.Steps[i].Requirements.GetDescription()}", richText);
-                        richText.normal.textColor = defaultColor;
+                            QuestDrawer.RichText.normal.textColor = disabledColor;
+                        GUILayout.Label($"{i+1}) {quest.Steps[i].Requirements.GetDescription()}", QuestDrawer.RichText);
+                        QuestDrawer.RichText.normal.textColor = defaultColor;
                     }
                 }
             }
             else if (InternalErrorMessages?.Length > 0)
             {
                 EditorGUILayout.Separator();
-                GUILayout.Label("<b>INTERNAL ERRORS</b>", richText);
+                GUILayout.Label("<b>INTERNAL ERRORS</b>", QuestDrawer.RichText);
                 foreach (var currentErrorMessage in InternalErrorMessages)
-                    GUILayout.Label(currentErrorMessage, errorText);
+                    GUILayout.Label(currentErrorMessage, QuestDrawer.ErrorText);
             }
 
             
             if (ValidationErrorMessages.Count > 0)
             {
                 EditorGUILayout.Separator();
-                GUILayout.Label("<b>VALIDATION ERRORS</b>", richText);
+                GUILayout.Label("<b>VALIDATION ERRORS</b>", QuestDrawer.RichText);
                 foreach (var currentErrorMessage in ValidationErrorMessages)
-                    GUILayout.Label(currentErrorMessage, errorText);
+                    GUILayout.Label(currentErrorMessage, QuestDrawer.ErrorText);
                 
                 
                 GUILayout.BeginHorizontal();

@@ -4,11 +4,12 @@ using UnityEngine;
 namespace giorgiokalmund.Dora.Requirements
 {
     [CreateAssetMenu(fileName = "Location", menuName = "Dora/Requirements/Location")]
-    public class LocationRequirement : QuestRequirements
+    public class LocationRequirement : QuestRequirements, IDonator<Anchor>
     {
         [SerializeField] private string forLocation;
         private SpaceFoundation _spaceFoundation;
-        public override QuestValidationInformation Validate()
+        
+        protected override QuestValidationInformation HandleValidation()
         {
             _spaceFoundation = FindAnyObjectByType<SpaceFoundation>();
             if (!_spaceFoundation)
@@ -21,9 +22,24 @@ namespace giorgiokalmund.Dora.Requirements
             return QuestValidationInformation.Success();
         }
 
-        public override string GetDescription()
+        internal override string GetDescription()
         {
             return $"'{forLocation}' in {_spaceFoundation?.name ?? "<UNKNOWN-SFS>"}";
+        }
+
+        public bool Receive(Anchor donation)
+        {
+            if (donation.GetUniqueId().Equals(forLocation))
+            {
+                OnComplete.Invoke();
+                return true;
+            }
+            return false;
+        }
+
+        public bool Steal(Anchor donation)
+        {
+            return false;
         }
     }
 }

@@ -42,7 +42,7 @@ namespace giorgiokalmund.Dora
 
         private static string LogFailure(Quest quest, QuestValidationFailure failure, string context = null)
         {
-            string failureString = $"Quest '{quest.TryGetQuestTitle()}' ({quest.TryGetQuestId()}) {context}{(context != null ? " " : "")}cannot be validated: {failure.Reason}";
+            string failureString = $"Quest '{quest.Information.Title}' ({quest.Information.Id}) {context}{(context != null ? " " : "")}cannot be validated: {failure.Reason}";
             QuestLogger.LogError(failureString);
             return failureString;
         }

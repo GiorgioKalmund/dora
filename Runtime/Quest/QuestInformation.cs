@@ -4,22 +4,28 @@ using UnityEngine;
 namespace giorgiokalmund.Dora
 {
     [Serializable]
-    [CreateAssetMenu(fileName = "QuestInformation", menuName = "Dora/QuestInformation", order = 2)]
-    public class QuestInformation : ScriptableObject
+    public class QuestInformation 
     {
+        public static int NextId { get; protected set; }
+        
         [field: ReadOnly]
         [field: SerializeField, Tooltip("Unique identifier for a Quest")]
         public string Id { get; protected set; }
         
         [field: SerializeField, Tooltip("Representative title for a Quest")]
-        public string Title { get; protected set; }
+        public string Title { get; internal set; }
 
         [field: SerializeField, Tooltip("Representative description for a Quest")]
-        public string Description { get; protected set; }
+        public string Description { get; internal set; }
 
-        private void Awake()
+        public QuestInformation()
         {
-            Id = name;
+            Id = "q" + GetNextID();
+        }
+        
+        protected int GetNextID()
+        {
+            return NextId++;
         }
     }
 }

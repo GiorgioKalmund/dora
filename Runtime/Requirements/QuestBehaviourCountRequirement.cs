@@ -1,51 +1,24 @@
+using System.Collections.Generic;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace giorgiokalmund.Dora.Requirements
 {
-    public enum CountMode
+    public class QuestBehaviourCountRequirement<T> : QuestCountRequirement<T>  where T : MonoBehaviour
     {
-        /// The requirement amount must be EXACTLY EQUAL to the amount of objects found.
-        EXACT,
-        /// The requirement amount must be AT LEAST EQUAL to the amount of objects found.
-        MINIMUM
-    }
-
-    public class QuestBehaviourCountRequirement<T> : QuestRequirements where T : MonoBehaviour
-    {
-        [field: SerializeField, Tooltip("The currently collected amount of units.")]
+        [field: SerializeField, Tooltip("The currently collected units.")]
         [field: ReadOnly]
-        public int CollectedAmount { get; private set; }
-        [field: SerializeField, Tooltip("The required amount of the type for the requirement to be true.")]
-        public int RequiredAmount { get; private set; }
-        [field: SerializeField, Tooltip("The mode in which the requirement has to be met.")]
-        public CountMode Mode { get; private set; }
-
-        public QuestBehaviourCountRequirement(int amount, CountMode mode = CountMode.MINIMUM)
-        {
-            CollectedAmount = 0;
-            RequiredAmount = amount;
-            Mode = mode;
-        }
-
-        public void Add()
-        {
-            if (CollectedAmount >= RequiredAmount)
-                return;
-            CollectedAmount++;
-        }
+        public List<T> Collected { get; private set; }
         
-        public void Remove()
-        {
-            if (CollectedAmount <= 0)
-                return;
-            CollectedAmount--;
-        }
+        public QuestBehaviourCountRequirement(int amount, CountMode mode = CountMode.MINIMUM) : base(amount, mode) { Collected = new List<T>(); }
 
-        protected QuestBehaviourCountRequirement() { }
+        public QuestBehaviourCountRequirement() { Collected = new List<T>(); }
 
-        public override QuestValidationInformation Validate()
+        protected override QuestValidationInformation HandleValidation()
         {
+            var baseResult = base.HandleValidation();
+            if (baseResult.IsFailure)
+                return baseResult;
+
             int objectCount = FindObjectsByType<T>().Length;
             if (objectCount < RequiredAmount)
                 return QuestValidationInformation.Failure($"Not enough {typeof(T)} present. Expected {RequiredAmount}, got {objectCount}");
@@ -56,9 +29,26 @@ namespace giorgiokalmund.Dora.Requirements
             return QuestValidationInformation.Success();
         }
 
-        public override string GetDescription()
+        protected override int GetCountOfCurrent()
         {
-            return $"{RequiredAmount} of {typeof(T)}";
+            return Collected?.Count ?? 0;
+        }
+
+        protected override bool HandleReceive(T element)
+        {
+            Collected.Add(element);
+            return true;
+        }
+
+        protected override bool HandleSteal(T element)
+        {
+            return Collected.Remove(element);
+        }
+
+        public override void ResetRequirements()
+        {
+            base.ResetRequirements();
+            Collected?.Clear();
         }
     }
 }

@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using giorgiokalmund.Dora.Utils;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEngine;
@@ -7,7 +9,7 @@ using UnityEngine;
 namespace giorgiokalmund.Dora
 {
     [CreateAssetMenu(fileName = "Quest", menuName = "Dora/Quest", order = 1)]
-    public class Quest :  ScriptableObject
+    public class Quest :  BaseComponent<QuestManager>
     {
         [field: ReadOnly]
         [field: SerializeField, Tooltip("Cannot be recovered or completed. Can be set during every state except if already <see cref=\"QuestState.COMPLETED\"/>.")]
@@ -35,29 +37,40 @@ namespace giorgiokalmund.Dora
         public QuestStep[] Steps { get; protected set; }
         private int _stepIndex;
 
+        internal IEnumerable<QuestRequirements> AllRequirements => Steps?.Select(s => s.Requirements);
+        internal IEnumerable<QuestRequirements> AllRequirementsToValidate => AllRequirements?.Where(r => !r.SkipValidation);
+
         [CanBeNull]
         public QuestStep CurrentStep
         {
             get
             {
-                if (_stepIndex < 0 || _stepIndex >= Steps.Length)
+                if (State != QuestState.ACCEPTED || _stepIndex < 0 || _stepIndex >= Steps.Length)
                     return null;
                 return Steps[_stepIndex];
             }
         }
 
-        private void Start()
+        private void OnEnable()
         {
             ValidateInternals();
             QuestValidator.Validate(this);
         }
 
+        private void Awake()
+        {
+            Information.Title = name;
+        }
+
         public QuestValidationInformation[] ValidateAllQuestSteps()
         {
+            if (AllRequirementsToValidate == null)
+                return Array.Empty<QuestValidationInformation>();
+            
             List<QuestValidationInformation> failures = new List<QuestValidationInformation>();
-            foreach (var questStep in Steps)
+            foreach (var requirement in AllRequirementsToValidate)
             {
-                var result = questStep.Requirements.Validate();
+                var result = requirement.Validate();
                 if (result.IsFailure)
                     failures.Add(result);
             }
@@ -68,9 +81,12 @@ namespace giorgiokalmund.Dora
         [NotNull]
         public QuestValidationInformation ValidateQuestSteps()
         {
-            foreach (var questStep in Steps)
+            if (AllRequirementsToValidate == null)
+                return QuestValidationInformation.Failure("There are no steps to validate!");
+            
+            foreach (var requirement in AllRequirementsToValidate)
             {
-                var result = questStep.Requirements.Validate();
+                var result = requirement.Validate();
                 if (result.IsFailure)
                     return result;
             }
@@ -94,12 +110,10 @@ namespace giorgiokalmund.Dora
         internal string[] GetInternalValidationResult()
         {
             List<string> errorMessages = new List<string>();
-            if (Information == null)
-                errorMessages.Add($"[{GetType()}]: Information cannot be null!");
             if (Steps == null)
                 errorMessages.Add($"[{GetType()}]: Steps cannot be null!");
             else if (Steps.FirstOrDefault(s => s != null) == null)
-                errorMessages.Add($"[{GetType()}]: Steps cannot be empty!");
+                errorMessages.Add($"[{GetType()} - {Information.Title}]: Steps cannot be empty!");
 
             return errorMessages.ToArray();
         }
@@ -125,7 +139,9 @@ namespace giorgiokalmund.Dora
             if (_stepIndex >= Steps.Length)
                 return null;
 
+            CurrentStep?.OnComplete.RemoveListener(HandleStepCompleted);
             _stepIndex++;
+            CurrentStep?.OnComplete.AddListener(HandleStepCompleted);
             return CurrentStep;
         }
 
@@ -147,6 +163,7 @@ namespace giorgiokalmund.Dora
                 if (State == QuestState.COMPLETED)
                     HandOutRewards();    
                 
+                Manager?.onQuestStateChanged.Invoke(this, State);
                 return true;
             }
 
@@ -170,6 +187,11 @@ namespace giorgiokalmund.Dora
             return true;
         }
 
+        public bool TryDonate(object value)
+        {
+            return CurrentStep?.Donate(value) ?? false;
+        }
+
         public bool Botch()
         {
             if (IsBotchedOrCompleted)
@@ -177,6 +199,11 @@ namespace giorgiokalmund.Dora
 
             IsBotched = true;
             return true;
+        }
+
+        private void HandleStepCompleted()
+        {
+            TryAdvanceState();
         }
 
         internal void HandOutRewards()
@@ -198,24 +225,6 @@ namespace giorgiokalmund.Dora
             return false;
         }
 
-
-        #region Helpers
         public bool Complete() => TryAdvanceState(QuestState.COMPLETED);
-
-        public string TryGetQuestTitle()
-        {
-            if (Information == null || string.IsNullOrEmpty(Information.Title))
-                return "<NO-TITLE>";
-            return Information.Title;
-        }
-        
-        public string TryGetQuestId()
-        {
-            if (Information == null || string.IsNullOrEmpty(Information.Id))
-                return "<NO-ID>";
-            return Information.Id;
-        }
-
-        #endregion
     }
 }
