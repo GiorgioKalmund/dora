@@ -1,6 +1,4 @@
 using System;
-using CodingHelmet.Optional;
-using UnityEngine;
 
 namespace giorgiokalmund.Dora
 {

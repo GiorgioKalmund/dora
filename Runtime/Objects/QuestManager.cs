@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using giorgiokalmund.Dora.Utils;
 using UnityEngine;
@@ -8,8 +9,7 @@ namespace giorgiokalmund.Dora
     /// <summary>
     /// Manages interactions with the questing system.
     /// </summary>
-    [CreateAssetMenu(fileName = "QuestManager", menuName = "Dora/QuestManager")] 
-    public class QuestManager : ScriptableObject, IComponentOwner
+    public class QuestManager : MonoBehaviour, IComponentOwner
     {
         [field: SerializeField]
         public Quest[] all;
@@ -23,7 +23,17 @@ namespace giorgiokalmund.Dora
         public Quest[] Achieved => all.Where(q => q.State == QuestState.ACHIEVED).ToArray();
         public Quest[] Completed => all.Where(q => q.State == QuestState.COMPLETED).ToArray();
         #endregion
-        
+
+        public static QuestManager Instance;
+
+        protected void Awake()
+        {
+            if (Instance && Instance != this)
+                Destroy(Instance.gameObject);
+            else
+                Instance = this;
+        }
+
         public bool TryUpdateQuest(string id, object value)
         {
             return all
@@ -34,8 +44,10 @@ namespace giorgiokalmund.Dora
 
         private void OnValidate()
         {
+            if (all == null)
+                return;
             foreach (var quest in all)
-                quest.AddTo(this);
+                quest?.AddTo(this);
         }
 
         public bool TryUpdateAnyQuest(object value)

@@ -14,6 +14,10 @@ namespace giorgiokalmund.Dora
         [field: ReadOnly]
         [field: SerializeField, Tooltip("Cannot be recovered or completed. Can be set during every state except if already <see cref=\"QuestState.COMPLETED\"/>.")]
         public bool IsBotched { get; protected set; }
+        
+        [field: ReadOnly]
+        [field: SerializeField, Tooltip("Whether this quest is invisible to the player. Certain events might not fire if set to true.")]
+        public bool IsHidden { get; protected set; }
 
         [field: ReadOnly]
         [field: SerializeField, Tooltip("The state of the quest. Can only move forward. (Unless restarted / reset)")]
@@ -38,7 +42,7 @@ namespace giorgiokalmund.Dora
         private int _stepIndex;
 
         internal IEnumerable<QuestRequirements> AllRequirements => Steps?.Select(s => s.Requirements);
-        internal IEnumerable<QuestRequirements> AllRequirementsToValidate => AllRequirements?.Where(r => !r.SkipValidation);
+        internal IEnumerable<QuestRequirements> AllRequirementsToValidate => AllRequirements?.Where(r =>  !r?.SkipValidation ?? false);
 
         [CanBeNull]
         public QuestStep CurrentStep

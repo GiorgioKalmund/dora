@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace giorgiokalmund.Dora.Requirements
 {
+    [System.Serializable] 
     public enum CountMode
     {
         /// The requirement amount must be EXACTLY EQUAL to the amount of objects found.

@@ -14,6 +14,7 @@ namespace giorgiokalmund.Dora.Editor
         private bool _foldOutStateQuickswap;
         private static readonly Color defaultColor = Color.gray8;
         private static readonly Color disabledColor = Color.gray5;
+        private bool validatedAtLeastOnce = false;
         public override void OnInspectorGUI()
         {
             Quest quest = (Quest)target;
@@ -53,6 +54,7 @@ namespace giorgiokalmund.Dora.Editor
                     var res = QuestValidator.ValidateAllQuestSteps(quest);
                     if (res != null)
                         ValidationErrorMessages.AddRange(res);
+                    validatedAtLeastOnce = true;
                 }
                 EditorGUI.BeginDisabledGroup(!quest.BaseRequirements);
                 if (GUILayout.Button("Validate Base + Steps"))
@@ -61,6 +63,7 @@ namespace giorgiokalmund.Dora.Editor
                     var res = QuestValidator.Validate(quest);
                     if (res != null)
                         ValidationErrorMessages.Add(res);
+                    validatedAtLeastOnce = true;
                 }
                 EditorGUI.EndDisabledGroup();
                 GUILayout.EndHorizontal();
@@ -83,7 +86,7 @@ namespace giorgiokalmund.Dora.Editor
                     {
                         if (!quest.Steps[i].IsCompleted)
                             QuestDrawer.RichText.normal.textColor = disabledColor;
-                        GUILayout.Label($"{i+1}) {quest.Steps[i].Requirements.GetDescription()}", QuestDrawer.RichText);
+                        GUILayout.Label($"{i+1}) {quest.Steps[i].Requirements?.GetDescription() ?? "<color=red><NO REQUIREMENTS></color>"}", QuestDrawer.RichText);
                         QuestDrawer.RichText.normal.textColor = defaultColor;
                     }
                 }
@@ -112,6 +115,10 @@ namespace giorgiokalmund.Dora.Editor
                     ValidationErrorMessages.Clear();
                 }
                 GUILayout.EndHorizontal();
+            }
+            else  if (validatedAtLeastOnce)
+            {
+                GUILayout.Label("All Requirements Validated", QuestDrawer.OkText);
             }
         }
     }

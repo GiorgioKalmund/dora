@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SpaceFoundationSystem;
+using UnityEditor;
 using UnityEngine;
 
 namespace giorgiokalmund.Dora.Generation
@@ -24,9 +25,13 @@ namespace giorgiokalmund.Dora.Generation
             {
                 for (int i = 0; i < dict[monoBehaviour]; i++)
                 {
-                    var instance = Instantiate(monoBehaviour);
+                    var instance = PrefabUtility.InstantiatePrefab(monoBehaviour) as GameObject;
+                    if (!instance)
+                        continue;
                     instance.transform.position = GetNextPosition();
                     instance.name = $"[GENERATED] - {monoBehaviour.name} ({GetType()})";
+                    var member = instance.AddComponent<LocationMember>();
+                    member.FindClosestAnchor();
                     Generated.Add(instance);
                     OnFinishGeneration(instance);
                 }

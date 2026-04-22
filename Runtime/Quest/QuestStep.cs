@@ -6,8 +6,7 @@ using UnityEngine.Events;
 namespace giorgiokalmund.Dora
 {
     [Serializable]
-    [CreateAssetMenu(fileName = "QuestStep", menuName = "Dora/QuestStep", order = 3)]
-    public class QuestStep : ScriptableObject
+    public class QuestStep 
     {
         [field: ReadOnly]
         [field: SerializeField, Tooltip("Whether this step has been completed.")]
@@ -20,10 +19,13 @@ namespace giorgiokalmund.Dora
 
         private void OnValidate()
         {
+            // TODO:
+            /*
             if (Requirements == null)
                 IsCompleted = false;
             else if (!IsCompleted && Requirements.OnComplete.GetPersistentEventCount() == 0)
                 Requirements?.OnComplete.AddListener(HandleRequirementsCompleted); 
+                */
         }
 
         private void HandleRequirementsCompleted()

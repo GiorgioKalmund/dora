@@ -1,3 +1,4 @@
+using System;
 using SpaceFoundationSystem;
 using UnityEngine;
 
@@ -6,25 +7,32 @@ namespace giorgiokalmund.Dora.Requirements
     [CreateAssetMenu(fileName = "Location", menuName = "Dora/Requirements/Location")]
     public class LocationRequirement : QuestRequirements, IDonator<Anchor>
     {
-        [SerializeField] private string forLocation;
-        private SpaceFoundation _spaceFoundation;
-        
+        [SerializeField] protected internal string forLocation;
+        protected internal SpaceFoundation SpaceFoundation;
+
+        private void OnEnable()
+        {
+            SpaceFoundation = FindAnyObjectByType<SpaceFoundation>();
+        }
+
         protected override QuestValidationInformation HandleValidation()
         {
-            _spaceFoundation = FindAnyObjectByType<SpaceFoundation>();
-            if (!_spaceFoundation)
+            SpaceFoundation = FindAnyObjectByType<SpaceFoundation>();
+            if (!SpaceFoundation)
                 return QuestValidationInformation.Failure("No SFS found!");
-            if (!_spaceFoundation.data)
+            if (!SpaceFoundation.data)
                 return QuestValidationInformation.Failure("No SFS Data found!");
-            if(!_spaceFoundation.data.anchors.ToDictionary().TryGetValue(forLocation, out _))
-                return QuestValidationInformation.Failure($"Cannot find Anchor '{forLocation}' in SFS!");
+            if (string.IsNullOrEmpty(forLocation))
+                return QuestValidationInformation.Failure("No Location provided!");
+            if (!SpaceFoundation.data.anchors.ToDictionary().TryGetValue(forLocation, out _))
+                return QuestValidationInformation.Failure($"Cannot find Anchor '{forLocation}' in {SpaceFoundation.name}!");
 
             return QuestValidationInformation.Success();
         }
 
         internal override string GetDescription()
         {
-            return $"'{forLocation}' in {_spaceFoundation?.name ?? "<UNKNOWN-SFS>"}";
+            return $"'{SpaceFoundation.TryGetAnchor(forLocation)?.name ?? "<UNKNOWN>"}' in {SpaceFoundation?.name ?? "<UNKNOWN-SFS>"}";
         }
 
         public bool Receive(Anchor donation)

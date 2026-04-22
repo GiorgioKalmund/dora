@@ -3,7 +3,8 @@
     "rootNamespace": "giorgiokalmund.Dora",
     "references": [
         "DyrdaDev.SpaceFoundationSystemForUnity.Runtime",
-        "com.codinghelmet.optional"
+        "com.codinghelmet.optional",
+        "DyrdaDev.SpaceFoundationSystemForUnity.Editor"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
