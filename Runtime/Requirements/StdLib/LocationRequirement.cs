@@ -32,7 +32,7 @@ namespace giorgiokalmund.Dora.Requirements
 
         internal override string GetDescription()
         {
-            return $"'{SpaceFoundation.TryGetAnchor(forLocation)?.name ?? "<UNKNOWN>"}' in {SpaceFoundation?.name ?? "<UNKNOWN-SFS>"}";
+            return $"'{SpaceFoundation?.TryGetAnchor(forLocation)?.name ?? "<UNKNOWN>"}' in {SpaceFoundation?.name ?? "<UNKNOWN-SFS>"}";
         }
 
         public bool Receive(Anchor donation)

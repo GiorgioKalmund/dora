@@ -38,6 +38,11 @@ namespace giorgiokalmund.Dora.Editor
             {
                 RunClearData();
             }
+            
+            if (GUILayout.Button("Reattach Scene Anchors @ Data"))
+            {
+                sfs.ReattachSceneAnchorsInData();
+            }
         }
         
         

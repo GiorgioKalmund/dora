@@ -11,7 +11,7 @@ namespace giorgiokalmund.Dora.Requirements
         MINIMUM
     }
 
-    public abstract class QuestCountRequirement<T> : QuestRequirements,  IDonator<T> 
+    public abstract class QuestCountRequirement<T> : QuestRequirements, IDonator<T>
     {
         [field: SerializeField, Tooltip("The required amount of the type for the requirement to be true.")]
         public int RequiredAmount { get; private set; }

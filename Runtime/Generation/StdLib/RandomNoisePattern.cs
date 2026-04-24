@@ -8,7 +8,7 @@ namespace giorgiokalmund.Dora.Generation.StdLib
         // TODO: Only draw properties mutually exclusively
         [Header("Bounding Mesh")]
         [Tooltip("Bounding mesh for the generation.")]
-        [SerializeField] private Collider templateBounds;
+        [SerializeField] internal Collider templateBounds;
         [Header("Bounding Sphere")]
         [Tooltip("Bounding sphere's radius for the generation. Will ONLY be used if NO bounding mesh is provided!")]
         [SerializeField] private int radius;

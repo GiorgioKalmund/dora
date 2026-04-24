@@ -23,6 +23,8 @@ namespace giorgiokalmund.Dora.Editor
             
             if (!string.IsNullOrEmpty(latestName))
                 GUILayout.Label($"Connected to Location: {latestName}", EditorStyles.boldLabel);
+            else 
+                GUILayout.Label($"No location connected.", EditorStyles.boldLabel);
         }
     }
 }

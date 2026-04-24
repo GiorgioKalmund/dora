@@ -38,6 +38,9 @@ namespace giorgiokalmund.Dora
 
         protected virtual bool CheckCompletion() { return true; }
 
+        /// <summary>
+        /// Resets the quest requirement to its starting state. All variables which track progress should be reset.
+        /// </summary>
         public virtual void ResetRequirements()
         {
             

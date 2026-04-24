@@ -1,4 +1,6 @@
 using System.Linq;
+using giorgiokalmund.Dora.Generation;
+using JetBrains.Annotations;
 using SpaceFoundationSystem;
 using UnityEditor;
 using UnityEngine;
@@ -20,10 +22,12 @@ namespace giorgiokalmund.Dora.Requirements
     }
     
     [CreateAssetMenu(fileName = "LocationBehaviours", menuName = "Dora/Requirements/LocationBehaviours")]
-    public class LocationBehaviourRequirement : LocationRequirement
+    public class LocationBehaviourRequirement : LocationRequirement, IPatternGenerator
     {
         [SerializeField] protected SerializableDictionary<GameObject, CountTracker> requiredObjects;
         [SerializeField] protected SerializableDictionary<MonoScript, CountTracker> requiredBehaviours;
+        
+        [SerializeField] [CanBeNull] protected GenerationPattern generationPattern;
 
         internal override string GetDescription()
         {
@@ -82,6 +86,11 @@ namespace giorgiokalmund.Dora.Requirements
             }
             
             return QuestValidationInformation.Success();
+        }
+
+        GenerationPattern IPatternGenerator.GetCurrentPattern()
+        {
+            return generationPattern;
         }
     }
 }

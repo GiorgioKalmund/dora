@@ -6,15 +6,16 @@ namespace giorgiokalmund.Dora.Generation.StdLib
     [CreateAssetMenu(fileName = "Line", menuName = "Dora/Generation/Line")]
     public class LinePattern : BulkObjectPattern
     {
-        [SerializeField] [field: ReadOnly]
+        [SerializeField] [Min(1)]
+        internal int segmentCount;
+        [SerializeField]
         private Vector3 pos1;
-        [SerializeField] [field: ReadOnly]
+        [SerializeField]
         private Vector3 pos2;
 
         internal Transform latestHandle1;
         internal Transform latestHandle2;
         
-        [SerializeField] [Min(1)] internal int segmentCount;
         private int ObjectsPerSegment => GenerationPool.ToDictionary().Values.Sum();
         
         protected override Vector3 GetNextPosition()

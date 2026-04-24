@@ -193,7 +193,12 @@ namespace giorgiokalmund.Dora
 
         public bool TryDonate(object value)
         {
-            return CurrentStep?.Donate(value) ?? false;
+            return CurrentStep?.TryDonate(value) ?? false;
+        }
+        
+        public bool TryDonateQuick()
+        {
+            return CurrentStep?.TryDonateQuick() ?? false;
         }
 
         public bool Botch()

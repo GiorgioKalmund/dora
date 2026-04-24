@@ -3,7 +3,7 @@ using UnityEngine;
 namespace giorgiokalmund.Dora.Requirements
 {
     [CreateAssetMenu(fileName = "IntCount", menuName = "Dora/Requirements/IntCount")]
-    public class IntCountRequirement : QuestCountRequirement<int>
+    public class IntCountRequirement : QuestCountRequirement<int>, IQuickDonator<int, IntCountRequirement>
     {
         [field: SerializeField, Tooltip("The currently collected units.")]
         [field: ReadOnly]
@@ -32,6 +32,12 @@ namespace giorgiokalmund.Dora.Requirements
         {
             base.ResetRequirements();
             Collected = 0;
+        }
+
+        public bool Receive() { return Receive(1); }
+        public int GetQuickDonation()
+        {
+            return 1;
         }
     }
 }

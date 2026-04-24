@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using giorgiokalmund.Dora.Utils;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -34,12 +35,20 @@ namespace giorgiokalmund.Dora
                 Instance = this;
         }
 
-        public bool TryUpdateQuest(string id, object value)
+        public bool TryDonateToQuest(string id, object value)
         {
-            return all
-                       .FirstOrDefault(q => q.Information?.Id.Equals(id) ?? false)
-                       ?.TryDonate(value) 
-                   ?? false;
+            return TryGetQuest(id)?.TryDonate(value) ?? false;
+        }
+
+        public bool TryDonateToQuestQuick(string id)
+        {
+            return TryGetQuest(id)?.TryDonateQuick() ?? false;
+        }
+
+        [CanBeNull]
+        public Quest TryGetQuest(string questId)
+        {
+            return all.FirstOrDefault(q => q.Information?.Id.Equals(questId) ?? false);
         }
 
         private void OnValidate()
@@ -50,7 +59,7 @@ namespace giorgiokalmund.Dora
                 quest?.AddTo(this);
         }
 
-        public bool TryUpdateAnyQuest(object value)
+        public bool TryUpdateAnyQuestWith(object value)
         {
             if (all.Length == 0)
             {

@@ -1,5 +1,4 @@
 using System;
-using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -35,12 +34,25 @@ namespace giorgiokalmund.Dora
             OnComplete.Invoke();
         }
 
-        public bool Donate(object donation)
+        public bool TryDonate(object donation)
         {
             if (Requirements is IDonator donator)
                 if (donator.CanDonate(donation))
                     return donator.Donate(donation);
+                else
+                    QuestLogger.LogWarning($"QuestStep {Requirements.name} currently does not take any donations.");
+            else 
+                QuestLogger.LogWarning($"QuestStep {Requirements.name} cannot be donated to.");
 
+            return false;
+        }
+        
+        public bool TryDonateQuick()
+        {
+            if (Requirements is IQuickDonator donator)
+                return donator.QuickDonate();
+            
+            QuestLogger.LogWarning($"QuestStep {Requirements.name} cannot be donated to.");
             return false;
         }
         

@@ -18,7 +18,7 @@ namespace giorgiokalmund.Dora.Editor
 
             if (GUILayout.Button("Donate 1"))
             {
-                bool result = manager.TryUpdateQuest("TestInformation" , 16);
+                bool result = manager.TryDonateToQuest("TestInformation" , 16);
                 Debug.Log("Update " + (result ? "successful" : "failed"));
             }
 
