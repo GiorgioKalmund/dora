@@ -12,6 +12,7 @@ namespace giorgiokalmund.Dora.Generation.StdLib
         {
             base.OnFinishGeneration(obj);
             this.Ground(obj, hitMask, mode);
+            this.GroundLocationMemberVisually(obj.GetComponent<LocationMember>());
         }
     }
 }

@@ -44,27 +44,6 @@ namespace giorgiokalmund.Dora.Requirements
             if (!anchor) // TODO: Anchor data not filled in!
                 return QuestValidationInformation.Failure( $"Could not get anchor object to validate location containment. Is the data properly set up?");
 
-
-            var scripts = requiredBehaviours.ToDictionary();
-            if (scripts != null)
-            {
-                foreach ((MonoScript script, CountTracker tracker) in scripts)
-                {
-                    var type = script.GetClass();
-                    if (type == null || !typeof(Object).IsAssignableFrom(type))
-                        return QuestValidationInformation.Failure( $"MonoScript <b>{script.name}</b> does not inherit from UnityEngine.Object!");
-
-                    var instances = FindObjectsByType(type).Where(o => o is MonoBehaviour).OfType<MonoBehaviour>().ToList();
-                    var containing = instances.Where(go => anchor.Equals(go.gameObject.transform.DetermineLocation())).ToList();
-                    int objectCount = containing.Count;
-                    if (objectCount < tracker.count)
-                        return QuestValidationInformation.Failure($"Not enough {script.GetClass().Name} present at {anchor.gameObject.name} ({forLocation}). Expected {tracker.count}, got {objectCount}.");
-            
-                    if (tracker.mode == CountMode.EXACT && objectCount > tracker.count)
-                        return QuestValidationInformation.Failure($"Not exact amount of {script.GetClass().Name} present at {anchor.gameObject.name} ({forLocation}). Expected {tracker.count}, got {objectCount}.");
-                }
-            }
-            
             var objects = requiredObjects.ToDictionary();
             if (objects != null)
             {
@@ -82,6 +61,26 @@ namespace giorgiokalmund.Dora.Requirements
             
                     if (tracker.mode == CountMode.EXACT && objectCount > tracker.count)
                         return QuestValidationInformation.Failure($"Not exact amount of {prefab.name} present at {anchor.gameObject.name} ({forLocation}). Expected {tracker.count}, got {objectCount}.");
+                }
+            }
+            
+            var scripts = requiredBehaviours.ToDictionary();
+            if (scripts != null)
+            {
+                foreach ((MonoScript script, CountTracker tracker) in scripts)
+                {
+                    var type = script.GetClass();
+                    if (type == null || !typeof(Object).IsAssignableFrom(type))
+                        return QuestValidationInformation.Failure( $"MonoScript <b>{script.name}</b> does not inherit from UnityEngine.Object!");
+
+                    var instances = FindObjectsByType(type).Where(o => o is MonoBehaviour).OfType<MonoBehaviour>().ToList();
+                    var containing = instances.Where(go => anchor.Equals(go.gameObject.transform.DetermineLocation())).ToList();
+                    int objectCount = containing.Count;
+                    if (objectCount < tracker.count)
+                        return QuestValidationInformation.Failure($"Not enough {script.GetClass().Name} present at {anchor.gameObject.name} ({forLocation}). Expected {tracker.count}, got {objectCount}.");
+            
+                    if (tracker.mode == CountMode.EXACT && objectCount > tracker.count)
+                        return QuestValidationInformation.Failure($"Not exact amount of {script.GetClass().Name} present at {anchor.gameObject.name} ({forLocation}). Expected {tracker.count}, got {objectCount}.");
                 }
             }
             

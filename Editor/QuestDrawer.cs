@@ -77,9 +77,11 @@ namespace giorgiokalmund.Dora.Editor
 
         public static void DrawGenerationPattern(GenerationPattern patternToGenerate)
         {
-            if (GUILayout.Button("Generate Pattern"))
+            if (GUILayout.Button("Generate"))
                 patternToGenerate.Generate();
-            if ( GUILayout.Button("Clear Generation"))
+            if (GUILayout.Button("Update"))
+                patternToGenerate.Update();
+            if ( GUILayout.Button("Clear"))
                 patternToGenerate.Clear();
         }
     }

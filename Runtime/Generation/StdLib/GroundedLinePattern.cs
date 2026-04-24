@@ -1,3 +1,4 @@
+using SpaceFoundationSystem;
 using UnityEngine;
 
 namespace giorgiokalmund.Dora.Generation.StdLib
@@ -11,6 +12,7 @@ namespace giorgiokalmund.Dora.Generation.StdLib
         {
             base.OnFinishGeneration(obj);
             this.Ground(obj, hitMask, mode);
+            this.GroundLocationMemberVisually(obj.GetComponent<LocationMember>());
         }
     }
 }

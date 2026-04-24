@@ -28,13 +28,29 @@ namespace giorgiokalmund.Dora.Generation
                     var instance = PrefabUtility.InstantiatePrefab(monoBehaviour) as GameObject;
                     if (!instance)
                         continue;
-                    instance.transform.position = GetNextPosition();
-                    instance.name = $"[GENERATED] - {monoBehaviour.name} ({GetType()})";
-                    var member = instance.AddComponent<LocationMember>();
+                    
+                    var memberHolder = new GameObject();
+                    memberHolder.transform.position = GetNextPosition();
+                    var member = memberHolder.AddComponent<LocationMember>();
+                    
+                    instance.transform.SetParent(memberHolder.transform,false);
+                    instance.transform.localPosition = Vector3.zero;
+                    memberHolder.name = $"[GENERATED] - {monoBehaviour.name} ({GetType()})";
+                    
+                    OnFinishGeneration(memberHolder);
                     member.FindClosestAnchor();
-                    Generated.Add(instance);
-                    OnFinishGeneration(instance);
+                    Generated.Add(memberHolder);
                 }
+            }
+        }
+
+        public override void Update()
+        {
+            foreach (var gameObject in Generated)
+            {
+                var member = gameObject.GetComponent<LocationMember>();
+                if (member)
+                    member.FindClosestAnchor();
             }
         }
 
