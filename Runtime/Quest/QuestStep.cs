@@ -1,4 +1,5 @@
 using System;
+using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,6 +13,7 @@ namespace giorgiokalmund.Dora
         public bool IsCompleted { get; protected set; }
         
         [field: SerializeField, Tooltip("Requirements to which need to be in place for the quest to be viable.")]
+        [field: Expandable]
         public QuestRequirements Requirements { get; protected set; }
 
         internal UnityEvent OnComplete = new UnityEvent();

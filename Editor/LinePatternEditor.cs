@@ -32,7 +32,6 @@ namespace giorgiokalmund.Dora.Editor
                 GUILayout.Label("Pos1 and Pos2 cannot be the same!", QuestDrawer.WarningText);
                 return;
             }
-            QuestDrawer.DrawGenerationPattern(pattern);
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using giorgiokalmund.Dora.Utils;
 using JetBrains.Annotations;
+using NaughtyAttributes;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -19,8 +20,8 @@ namespace giorgiokalmund.Dora
         [field: SerializeField, Tooltip("Whether this quest is invisible to the player. Certain events might not fire if set to true.")]
         public bool IsHidden { get; protected set; }
 
-        [field: ReadOnly]
         [field: SerializeField, Tooltip("The state of the quest. Can only move forward. (Unless restarted / reset)")]
+        [field: ReadOnly]
         public QuestState State { get; internal set; }
 
         /// Whether the quest is botched or completed. This indicated that no operations which affect the quest are possible anymore.

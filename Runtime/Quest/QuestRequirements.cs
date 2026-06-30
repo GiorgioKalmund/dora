@@ -1,5 +1,6 @@
 using System;
 using JetBrains.Annotations;
+using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.Events;
 

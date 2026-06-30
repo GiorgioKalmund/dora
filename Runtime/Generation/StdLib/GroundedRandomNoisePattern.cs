@@ -5,6 +5,7 @@ namespace giorgiokalmund.Dora.Generation.StdLib
     [CreateAssetMenu(fileName = "GroundedRandomNoise", menuName = "Dora/Generation/GroundedRandomNoise")]
     public class GroundedRandomNoisePattern : RandomNoisePattern, IPatternGrounder
     {
+        [Header("Ground")]
         [SerializeField] protected GroundingMode mode;
         [SerializeField] protected LayerMask hitMask;
 

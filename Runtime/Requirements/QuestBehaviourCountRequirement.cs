@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using giorgiokalmund.Dora.Generation;
 using JetBrains.Annotations;
+using NaughtyAttributes;
 using UnityEngine;
 
 namespace giorgiokalmund.Dora.Requirements

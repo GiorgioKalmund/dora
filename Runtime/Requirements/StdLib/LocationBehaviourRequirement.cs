@@ -1,6 +1,8 @@
 using System.Linq;
 using giorgiokalmund.Dora.Generation;
+using giorgiokalmund.Dora.Generation.StdLib;
 using JetBrains.Annotations;
+using NaughtyAttributes;
 using SpaceFoundationSystem;
 using UnityEditor;
 using UnityEngine;
@@ -27,6 +29,8 @@ namespace giorgiokalmund.Dora.Requirements
         [SerializeField] protected SerializableDictionary<GameObject, CountTracker> requiredObjects;
         [SerializeField] protected SerializableDictionary<MonoScript, CountTracker> requiredBehaviours;
         
+        [Header("Pattern Generation")]
+        [Expandable]
         [SerializeField] [CanBeNull] protected GenerationPattern generationPattern;
 
         internal override string GetDescription()
@@ -89,6 +93,20 @@ namespace giorgiokalmund.Dora.Requirements
 
         GenerationPattern IPatternGenerator.GetCurrentPattern()
         {
+            if (generationPattern == null)
+            {
+                // pick appropriate pattern such as random grounded noise 
+            }
+            if (generationPattern is BulkObjectPattern bulk)
+            {
+                bulk.Clear();
+                bulk.GenerationPool.Clear();
+                foreach ((GameObject gameObject, CountTracker tracker) in requiredObjects.ToDictionary())
+                {
+                    bulk.GenerationPool.Add(gameObject, tracker.count);
+                }
+                EditorUtility.SetDirty(bulk);
+            }
             return generationPattern;
         }
     }

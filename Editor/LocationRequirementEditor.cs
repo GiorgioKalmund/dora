@@ -1,3 +1,4 @@
+using giorgiokalmund.Dora.Generation;
 using giorgiokalmund.Dora.Requirements;
 using UnityEditor;
 using UnityEngine;
@@ -20,6 +21,9 @@ namespace giorgiokalmund.Dora.Editor
                 latestString = loc.forLocation;
                 latestName = loc.SpaceFoundation?.TryGetAnchor(latestString)?.gameObject.name;
             }
+            
+            if (loc is IPatternGenerator generator)
+                QuestDrawer.DrawIPatternGenerator(generator);
             
             if (!string.IsNullOrEmpty(latestName))
                 GUILayout.Label($"Connected to Location: {latestName}", EditorStyles.boldLabel);

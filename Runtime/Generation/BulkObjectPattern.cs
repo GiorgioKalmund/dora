@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using NaughtyAttributes;
 using SpaceFoundationSystem;
 using UnityEditor;
 using UnityEngine;
@@ -9,10 +11,12 @@ namespace giorgiokalmund.Dora.Generation
     {
         [field: SerializeField, Tooltip("")]
         public SerializableDictionary<GameObject, int> GenerationPool;
-        
+
+        [field: SerializeField, Tooltip("Holds the reference to the ids of generated items. ")]
         [field: ReadOnly]
-        [field: SerializeField, Tooltip("")]
-        public List<GameObject> Generated { get; protected set; }
+        public List<string> GeneratedIds { get; protected set; }
+        
+        protected Dictionary<string, GenerationMember> Generated = new Dictionary<string, GenerationMember>();
         
         public override void Generate()
         {
@@ -35,34 +39,83 @@ namespace giorgiokalmund.Dora.Generation
                     
                     instance.transform.SetParent(memberHolder.transform,false);
                     instance.transform.localPosition = Vector3.zero;
+                    
                     memberHolder.name = $"[GENERATED] - {monoBehaviour.name} ({GetType()})";
+                    var generation = memberHolder.AddComponent<GenerationMember>();
                     
                     OnFinishGeneration(memberHolder);
                     member.FindClosestAnchor();
-                    Generated.Add(memberHolder);
-                }
+                    
+                    GeneratedIds.Add(generation.Id);
+                    Generated.Add(generation.Id, generation);
+                    EditorUtility.SetDirty(this);
+                }   
             }
         }
 
         public override void Update()
         {
-            foreach (var gameObject in Generated)
+            if (Generated == null)
             {
-                var member = gameObject.GetComponent<LocationMember>();
-                if (member)
-                    member.FindClosestAnchor();
+                QuestLogger.LogWarning($"Cannot update [{GetType().Name}]. No generated items.");
+                return;
             }
+
+            List<string> keysToRemove = new List<string>();
+            foreach (string genId in GeneratedIds)
+            {
+                if (!Generated.TryGetValue(genId, out _))
+                {
+                    var find = GenerationMember.Find(genId);
+                    if (!find)
+                    {
+                        QuestLogger.LogWarning($"Could not find matching generated object for {genId}. Removing it from list of managed entries.");
+                        keysToRemove.Add(genId);
+                        continue;
+                    }
+                    
+                    Generated[genId] = find;
+                }
+
+                if (Generated.TryGetValue(genId, out var obj))
+                    obj?.GetComponent<LocationMember>()?.FindClosestAnchor();
+                else
+                    keysToRemove.Add(genId);
+            }
+
+            foreach (var genId in keysToRemove)
+                Remove(genId);
         }
 
         protected abstract Vector3 GetNextPosition();
         
         protected abstract void OnFinishGeneration(GameObject obj);
 
+        public bool RequiresUpdate => Generated?.FirstOrDefault().Value == null;
+
         public override void Clear()
         {
-            foreach (var monoBehaviour in Generated)
-                DestroyImmediate(monoBehaviour.gameObject);
+            if (RequiresUpdate)
+                Update();
+
+            foreach (var generatedId in GeneratedIds)
+                Remove(generatedId, true);
+            GeneratedIds.Clear();
             Generated.Clear();
+        }
+
+        protected void Remove(string genId, bool soft = false)
+        {
+            Generated.TryGetValue(genId, out var go);
+            if (go?.IsFixed ?? false)
+                return;
+            
+            DestroyImmediate(go?.gameObject);
+            if (!soft)
+            {
+                GeneratedIds.Remove(genId);
+                Generated.Remove(genId);
+            }
         }
     }
 }

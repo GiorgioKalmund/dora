@@ -41,6 +41,7 @@ namespace giorgiokalmund.Dora.Editor
             
             if (GUILayout.Button("Reattach Scene Anchors @ Data"))
             {
+                sfs.TryInitializeDictionaries();
                 sfs.ReattachSceneAnchorsInData();
             }
         }

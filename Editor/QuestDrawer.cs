@@ -84,5 +84,13 @@ namespace giorgiokalmund.Dora.Editor
             if ( GUILayout.Button("Clear"))
                 patternToGenerate.Clear();
         }
+
+        public static void DrawIPatternGenerator(IPatternGenerator generator)
+        {
+            if (GUILayout.Button("Generate Solution"))
+            {
+                generator.GenerateSolution();
+            }
+        }
     }
 }
