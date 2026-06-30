@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a5f6f8d23654b25a96a445ece5194f9, type: 3}
+  m_Name: SpaceFoundation-Sample-Scene_chunked
+  m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.SpaceFoundationData
+  borders:
+    entries: []
+  anchors:
+    entries:
+    - Key: a0
+      Value: {fileID: 0}
+    - Key: a1
+      Value: {fileID: 0}
+  explicitDelimiters:
+    entries: []
+  implicitDelimiters:
+    entries:
+    - Key: a1
+      Value:
+        Array:
+        - a0
+        - a1
+  anchorStringToIntIdDict:
+    entries:
+    - Key: _
+      Value: 0
+    - Key: a0
+      Value: 1
+    - Key: a1
+      Value: 2
+  anchorIntToStringIdDict:
+    entries:
+    - Key: 0
+      Value: _
+    - Key: 1
+      Value: a0
+    - Key: 2
+      Value: a1
+  anchorToVoxelPositionDict:
+    entries:
+    - Key: a0
+      Value: {x: -7, y: 2, z: -6}
+    - Key: a1
+      Value: {x: 5, y: 2, z: 5}
