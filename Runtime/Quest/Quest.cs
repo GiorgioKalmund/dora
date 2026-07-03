@@ -46,9 +46,9 @@ namespace giorgiokalmund.Dora
 
         internal IEnumerable<QuestStep> AllRequirementsToValidate => Steps.Where(r =>  !r?.SkipValidation ?? false);
 
-        public UnityEvent<QuestState> onStateChanged = new UnityEvent<QuestState>();
-        public UnityEvent<QuestStep> onStepStarted = new UnityEvent<QuestStep>();
-        public UnityEvent<QuestStep> onStepCompleted = new UnityEvent<QuestStep>();
+        public UnityEvent<QuestState> onStateChanged = new ();
+        public UnityEvent<QuestStep> onStepStarted = new ();
+        public UnityEvent<QuestStep> onStepCompleted = new ();
         
         [CanBeNull]
         public QuestStep CurrentStep
@@ -72,6 +72,8 @@ namespace giorgiokalmund.Dora
             currentStepIdx = 0;
             IsBotched = false;
             IsHidden = false;
+            foreach (var questStep in Steps)
+                questStep.Reset();
         } 
 
         #region Validation
@@ -217,26 +219,37 @@ namespace giorgiokalmund.Dora
                 DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it already completed.");
                 return false;
             }
-            
-            if (newState.CompareTo(State) <= 0)
+
+            int stateComp = newState.CompareTo(State);
+            if (stateComp == 0)
             {
-                DoraLogger.LogError($"Cannot set {Information} to state '{newState}' as it is already in state '{State}'");
+                DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it is already in that state.");
+                return false;
+            }
+            
+            if (stateComp < 0)
+            {
+                DoraLogger.LogError($"Cannot set {Information} to state '{newState}' as it is already in further in state.'{State}'");
                 return false;
             }
 
-            if (newState == QuestState.ACHIEVED && !CanBeAchieved())
+            if (newState >= QuestState.ACHIEVED && !CanBeAchieved())
             {
-                DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it cannot be achieved right now.");
+                DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it cannot be achieved or completed right now.");
                 return false;
             }
 
             State = newState;
             onStateChanged.Invoke(State);
             Manager?.onQuestStateChanged.Invoke(this, State);
-            
+
             if (State == QuestState.ACCEPTED)
             {
-                CurrentStep?.OnComplete.AddListener(HandleStepCompleted);
+                if (CurrentStep != null)
+                {
+                    CurrentStep.OnComplete.AddListener(HandleStepCompleted);
+                    onStepStarted.Invoke(CurrentStep);
+                }
             }
 
             if (State == QuestState.ACHIEVED && Rewards == null)

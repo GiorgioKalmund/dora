@@ -33,7 +33,7 @@ namespace giorgiokalmund.Dora.Requirements
         [Expandable]
         [SerializeField] [CanBeNull] protected GenerationPattern generationPattern;
 
-        internal override string GetDescription()
+        public override string GetDescription()
         {
             return base.GetDescription() + $"\n\t{requiredBehaviours.ToDictionary().Count} Behaviours" + $"\n\t{requiredObjects.ToDictionary().Count} Scripts";;
         }

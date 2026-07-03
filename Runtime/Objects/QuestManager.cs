@@ -49,10 +49,6 @@ namespace giorgiokalmund.Dora
             
             foreach (var quest in all)
                 quest.InitForScene();
-
-            // TODO: Proper in-world starting etc
-            all[0].Reset();
-            StartQuest(all[0]);
         }
 
         public void RegisterMainActor(LocationMember locationMember)
@@ -77,35 +73,39 @@ namespace giorgiokalmund.Dora
 
             foreach (var req in currentLocations)
             {
-                if (req is LocationStep locationRequirement)
-                    locationRequirement.Receive(newLocation.GetUniqueId());
+                if (req is IDonator<string> donator)
+                    donator.Receive(newLocation.GetUniqueId());
             }
         }
 
-        public bool StartQuest(Quest quest)
+        public bool MentionQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.MENTIONED);
+        public bool StartQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.ACCEPTED);
+        public bool CompleteQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.COMPLETED);
+      
+
+        private bool SetQuestStateInternal(Quest quest, QuestState state)
         {
             if (!all.Contains(quest))
             {
-                DoraLogger.LogError($"Cannot start {quest.Information}. Not tracked by manager.");
+                DoraLogger.LogError($"Cannot move {quest.Information} to state {state}. Not tracked by this QuestManager.", this);
                 return false;
             }
 
-            if (!quest.TrySetState(QuestState.ACCEPTED))
-            {
-                DoraLogger.LogError($"Cannot start {quest.Information}.");
-                return false;
-            }
-
-            return true;
+            return quest.TrySetState(state);
         }
-
+        
         public void AddComponent<T>(BaseComponent<T> component) where T : IComponentOwner
         {
-            var casted = component as Quest;
-            if (casted is null)
+            var quest = component as Quest;
+            if (quest is null)
             {
                 DoraLogger.LogError($"[{GetType()}]: Cannot add {component} as component. Incompatible controller type.");
+                return;
             }
+
+            var result = quest.GetInternalValidationResult();
+            if (result.Length != 0)
+                DoraLogger.LogError($"[{quest}]: {result.Length} Validation issues.");
         }
     }
         

@@ -55,7 +55,7 @@ namespace giorgiokalmund.Dora
             ResetRequirements();
         }
 
-        internal abstract string GetDescription();
+        public abstract string GetDescription();
 
         protected virtual bool CheckCompletion() { return true; }
 

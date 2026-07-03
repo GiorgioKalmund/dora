@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace giorgiokalmund.Dora
 {
@@ -33,6 +34,20 @@ namespace giorgiokalmund.Dora
                 case QuestState.ACHIEVED: return QuestState.COMPLETED;
                 case QuestState.COMPLETED: return null;
                 default: return QuestState.UNKNOWN;
+            }
+        }
+        
+        // TODO: Probably remove if too generic / useless
+        public static Color GetColor(this QuestState state)
+        {
+            switch (state)
+            {
+                case QuestState.UNKNOWN: 
+                case QuestState.MENTIONED: return Color.gray;
+                case QuestState.ACCEPTED: return Color.deepSkyBlue;
+                case QuestState.ACHIEVED: return Color.yellow;
+                case QuestState.COMPLETED: return Color.green;
+                default: return Color.white;
             }
         }
     }

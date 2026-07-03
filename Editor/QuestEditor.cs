@@ -39,16 +39,8 @@ namespace giorgiokalmund.Dora.Editor
                     }
                     GUILayout.EndHorizontal();
                 }
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Button("Try Advance State"))
-                {
-                    if (quest.TryAdvanceState(out QuestState newState))
-                        DoraLogger.Log($"Advanced Quest {quest.Information.Title} to {newState}");
-                    else
-                        DoraLogger.LogWarning($"Could not advance quest {quest.Information.Title}");
-                }
-                GUILayout.EndHorizontal();
-
+                
+                
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("Validate All Steps"))
                 {
@@ -69,6 +61,14 @@ namespace giorgiokalmund.Dora.Editor
                 }
                 EditorGUI.EndDisabledGroup();
                 GUILayout.EndHorizontal();
+                
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("DEBUG: Reset"))
+                {
+                    quest.Reset();
+                }
+                GUILayout.EndHorizontal();
+
 
                 if (quest.BaseStep)
                 {
@@ -86,9 +86,12 @@ namespace giorgiokalmund.Dora.Editor
                     GUILayout.Label("<b>STEP OVERVIEW</b>", QuestDrawer.RichText);
                     for (var i = 0; i < quest.Steps.Length; i++)
                     {
+                        if (quest.Steps[i] == null)
+                            continue;
+                        
                         if (!quest.Steps[i].IsCompleted)
                             QuestDrawer.RichText.normal.textColor = disabledColor;
-                        GUILayout.Label($"{i+1}) {quest.Steps[i].GetDescription() ?? "<color=red><NO REQUIREMENTS></color>"}", QuestDrawer.RichText);
+                        GUILayout.Label($"{i+1})\t{quest.Steps[i].GetDescription() ?? "<color=red><NO REQUIREMENTS></color>"}", QuestDrawer.RichText);
                         QuestDrawer.RichText.normal.textColor = defaultColor;
                     }
                 }

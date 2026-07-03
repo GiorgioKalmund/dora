@@ -38,7 +38,7 @@ namespace giorgiokalmund.Dora.Requirements
 
         protected abstract int GetCountOfCurrent();
 
-        internal override string GetDescription()
+        public override string GetDescription()
         {
             return $"{RequiredAmount} of {typeof(T)}";
         }

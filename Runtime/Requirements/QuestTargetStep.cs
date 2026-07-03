@@ -20,7 +20,7 @@ namespace giorgiokalmund.Dora.Requirements
             return new QuestValidationSuccess();
         }
 
-        internal override string GetDescription()
+        public override string GetDescription()
         {
             return $"{Targets.Length} {typeof(T)}";
         }

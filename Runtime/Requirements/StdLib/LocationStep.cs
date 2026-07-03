@@ -25,9 +25,9 @@ namespace giorgiokalmund.Dora.Requirements
             return QuestValidationInformation.Success();
         }
 
-        internal override string GetDescription()
+        public override string GetDescription()
         {
-            return anchorID;
+            return $"Visit {anchorID}";
         }
 
         public bool Receive(string receivedAnchorID)
