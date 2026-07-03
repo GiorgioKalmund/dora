@@ -11,7 +11,7 @@ namespace giorgiokalmund.Dora.Requirements
         MINIMUM
     }
 
-    public abstract class QuestCountRequirement<T> : QuestRequirements, IDonator<T>
+    public abstract class QuestCountStep<T> : QuestStep, IDonator<T>
     {
         [field: SerializeField, Tooltip("The required amount of the type for the requirement to be true.")]
         public int RequiredAmount { get; private set; }
@@ -23,13 +23,13 @@ namespace giorgiokalmund.Dora.Requirements
         
         public const int MaxElementCount = int.MaxValue; // TODO: Friendlier API / Interface
         
-        public QuestCountRequirement(int amount, CountMode mode = CountMode.MINIMUM)
+        public QuestCountStep(int amount, CountMode mode = CountMode.MINIMUM)
         {
             RequiredAmount = Mathf.Min(amount, MaxElementCount);
             Mode = mode;
         }
 
-        protected QuestCountRequirement() { }
+        protected QuestCountStep() { }
 
         protected override QuestValidationInformation HandleValidation()
         {
@@ -43,14 +43,14 @@ namespace giorgiokalmund.Dora.Requirements
             return $"{RequiredAmount} of {typeof(T)}";
         }
 
-        public bool Receive(T donation)
+        public bool Receive(T receivedAnchorID)
         {
             if (CollectedAmount >= RequiredAmount || CollectedAmount > MaxElementCount)
                 return false;
             
-            var success = HandleReceive(donation);
+            var success = HandleReceive(receivedAnchorID);
             if (success && CanBeCompleted)
-                OnComplete.Invoke();
+                Complete();
             return success;
         }
 

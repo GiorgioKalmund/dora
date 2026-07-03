@@ -4,68 +4,77 @@ using System.Linq;
 using giorgiokalmund.Dora.Utils;
 using JetBrains.Annotations;
 using NaughtyAttributes;
-using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace giorgiokalmund.Dora
 {
     [CreateAssetMenu(fileName = "Quest", menuName = "Dora/Quest", order = 1)]
-    public class Quest :  BaseComponent<QuestManager>
+    public class Quest :  BaseComponent<QuestManager>, IEquatable<Quest>, IComparable<Quest>
     {
         [field: ReadOnly]
         [field: SerializeField, Tooltip("Cannot be recovered or completed. Can be set during every state except if already <see cref=\"QuestState.COMPLETED\"/>.")]
         public bool IsBotched { get; protected set; }
         
-        [field: ReadOnly]
         [field: SerializeField, Tooltip("Whether this quest is invisible to the player. Certain events might not fire if set to true.")]
         public bool IsHidden { get; protected set; }
 
         [field: SerializeField, Tooltip("The state of the quest. Can only move forward. (Unless restarted / reset)")]
         [field: ReadOnly]
-        public QuestState State { get; internal set; }
+        public QuestState State { get; private set; }
+
+        public bool IsCompleted => State == QuestState.COMPLETED;
 
         /// Whether the quest is botched or completed. This indicated that no operations which affect the quest are possible anymore.
-        public bool IsBotchedOrCompleted => IsBotched || State == QuestState.COMPLETED;
+        public bool IsBotchedOrCompleted => IsBotched || IsCompleted;
 
         [field: SerializeField, Tooltip("Information about the quest in general.")]
         public QuestInformation Information { get; protected set; }
 
         [field: SerializeField, Tooltip("Optional initial Requirements for the quest to be met.")]
         [CanBeNull]
-        public QuestRequirements BaseRequirements { get; protected set; }
+        public QuestStep BaseStep { get; protected set; }
         
         [field: SerializeField, Tooltip("Optional rewards when the quest is completed.")]
         [CanBeNull]
         public QuestRewards Rewards { get; protected set; }
 
-        [field: SerializeField, Tooltip("Individual steps of the quest.")]
+        [field: SerializeField, Tooltip("Individual steps of the quest."), Expandable]
         public QuestStep[] Steps { get; protected set; }
-        private int _stepIndex;
+        [field: SerializeField][field:ReadOnly] private int currentStepIdx;
+        public int CurrentCurrentStepIdx => currentStepIdx;
 
-        internal IEnumerable<QuestRequirements> AllRequirements => Steps?.Select(s => s.Requirements);
-        internal IEnumerable<QuestRequirements> AllRequirementsToValidate => AllRequirements?.Where(r =>  !r?.SkipValidation ?? false);
+        internal IEnumerable<QuestStep> AllRequirementsToValidate => Steps.Where(r =>  !r?.SkipValidation ?? false);
 
+        public UnityEvent<QuestState> onStateChanged = new UnityEvent<QuestState>();
+        public UnityEvent<QuestStep> onStepStarted = new UnityEvent<QuestStep>();
+        public UnityEvent<QuestStep> onStepCompleted = new UnityEvent<QuestStep>();
+        
         [CanBeNull]
         public QuestStep CurrentStep
         {
             get
             {
-                if (State != QuestState.ACCEPTED || _stepIndex < 0 || _stepIndex >= Steps.Length)
+                if (State != QuestState.ACCEPTED || currentStepIdx < 0 || currentStepIdx >= Steps.Length)
                     return null;
-                return Steps[_stepIndex];
+                return Steps[currentStepIdx];
             }
-        }
-
-        private void OnEnable()
-        {
-            ValidateInternals();
-            QuestValidator.Validate(this);
         }
 
         private void Awake()
         {
             Information.Title = name;
         }
+        
+        public void Reset()
+        {
+            State = QuestState.UNKNOWN;
+            currentStepIdx = 0;
+            IsBotched = false;
+            IsHidden = false;
+        } 
+
+        #region Validation
 
         public QuestValidationInformation[] ValidateAllQuestSteps()
         {
@@ -102,9 +111,9 @@ namespace giorgiokalmund.Dora
         [NotNull]
         public QuestValidationInformation Validate()
         {
-            if (BaseRequirements)
+            if (BaseStep)
             {
-                var result = BaseRequirements.Validate();
+                var result = BaseStep.Validate();
                 if (result.IsFailure)
                     return result;
             }
@@ -115,91 +124,127 @@ namespace giorgiokalmund.Dora
         internal string[] GetInternalValidationResult()
         {
             List<string> errorMessages = new List<string>();
+            if (String.IsNullOrEmpty(Information.identifier))
+                errorMessages.Add("Identifier cannot be empty or null.");
             if (Steps == null)
-                errorMessages.Add($"[{GetType()}]: Steps cannot be null!");
+                errorMessages.Add("Steps cannot be null.");
             else if (Steps.FirstOrDefault(s => s != null) == null)
-                errorMessages.Add($"[{GetType()} - {Information.Title}]: Steps cannot be empty!");
+                errorMessages.Add("Steps cannot be empty.");
 
             return errorMessages.ToArray();
         }
 
-        internal void ValidateInternals()
-        {
-            string[] messages = GetInternalValidationResult();
-            foreach (var message in messages)
-                QuestLogger.LogError(message);
-        }
+        #endregion
 
+        internal void InitForScene()
+        {
+            
+        }
+        
         [CanBeNull]
         protected QuestStep NextStep()
         {
             if (IsBotchedOrCompleted)
+            {
+                DoraLogger.LogWarning("Cannot move onto next step. Quest botched or already completed.");
                 return null;
+            }
 
             if (State != QuestState.ACCEPTED)
+            {
+                DoraLogger.LogWarning("Cannot move onto next step. Quest not accepted yet.");
                 return null;
-
-            Assert.IsTrue(Steps?.Length > 0, $"[{GetType()}]: Cannot advance to next step. There are no steps provided.");
-
-            if (_stepIndex >= Steps.Length)
+            }
+            
+            if (Steps == null)
+            {
+                DoraLogger.LogWarning($"[{GetType()}]: Cannot advance to next step. There are no steps provided.");
                 return null;
+            };
 
+            if (currentStepIdx >= Steps.Length)
+            {
+                DoraLogger.LogWarning("Cannot move onto next step. No more steps left.");
+                return null;
+            }
+
+            if (CurrentStep != null)
+                onStepCompleted.Invoke(CurrentStep);
             CurrentStep?.OnComplete.RemoveListener(HandleStepCompleted);
-            _stepIndex++;
+            currentStepIdx++;
             CurrentStep?.OnComplete.AddListener(HandleStepCompleted);
+            if (CurrentStep != null)
+                onStepStarted.Invoke(CurrentStep);
             return CurrentStep;
         }
 
-        public bool TryAdvanceState()
+        /// <summary>
+        /// Advances the state based on the restricted flow of the state logic.
+        /// </summary>
+        /// <param name="newState"></param>
+        /// <returns></returns>
+        internal bool TryAdvanceState(out QuestState newState)
         {
-            if (IsBotchedOrCompleted)
-                return false;
+            newState = State;
 
-            if (BaseRequirements && State < QuestState.ACCEPTED && BaseRequirements.Validate().IsFailure)
+            if (State < QuestState.ACCEPTED && (BaseStep && BaseStep.Validate().IsFailure))
+            {
+                DoraLogger.LogWarning("cannot advance state. not accepted or base not met");
                 return false;
+            }
 
             var next = State.GetNext();
             if (next.HasValue)
             {
-                if (next.Value == QuestState.ACHIEVED && !CanBeAchieved())
-                    return false;
-
-                State = next.Value;
-                if (State == QuestState.COMPLETED)
-                    HandOutRewards();    
-                
-                Manager?.onQuestStateChanged.Invoke(this, State);
-                return true;
+                newState = next.Value;
+                return TrySetState(next.Value);
             }
 
+            DoraLogger.LogWarning("no next state :(");
             return false;
         }
-        
-        public bool TryAdvanceState(QuestState state)
+
+        internal bool TrySetState(QuestState newState)
         {
-            if (IsBotchedOrCompleted)
-                return false;
-
-            if (state <= State)
-                return false;
-
-            while (!State.Equals(state))
+            if (IsBotched)
             {
-                if (!TryAdvanceState())
-                    return false;
+                DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it is botched.");
+                return false;
             }
             
-            return true;
-        }
+            if (IsCompleted)
+            {
+                DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it already completed.");
+                return false;
+            }
+            
+            if (newState.CompareTo(State) <= 0)
+            {
+                DoraLogger.LogError($"Cannot set {Information} to state '{newState}' as it is already in state '{State}'");
+                return false;
+            }
 
-        public bool TryDonate(object value)
-        {
-            return CurrentStep?.TryDonate(value) ?? false;
-        }
-        
-        public bool TryDonateQuick()
-        {
-            return CurrentStep?.TryDonateQuick() ?? false;
+            if (newState == QuestState.ACHIEVED && !CanBeAchieved())
+            {
+                DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it cannot be achieved right now.");
+                return false;
+            }
+
+            State = newState;
+            onStateChanged.Invoke(State);
+            Manager?.onQuestStateChanged.Invoke(this, State);
+            
+            if (State == QuestState.ACCEPTED)
+            {
+                CurrentStep?.OnComplete.AddListener(HandleStepCompleted);
+            }
+
+            if (State == QuestState.ACHIEVED && Rewards == null)
+                return TryAdvanceState(out _);
+            
+            if (State == QuestState.COMPLETED)
+                HandOutRewards();
+            return true;
         }
 
         public bool Botch()
@@ -213,7 +258,8 @@ namespace giorgiokalmund.Dora
 
         private void HandleStepCompleted()
         {
-            TryAdvanceState();
+            if (NextStep() == null)
+                TryAdvanceState(out _);
         }
 
         internal void HandOutRewards()
@@ -226,15 +272,49 @@ namespace giorgiokalmund.Dora
             if (IsBotchedOrCompleted)
                 return false;
 
-            if (CurrentStep == null)
+            if (Steps == null)
                 return false;
 
-            if (_stepIndex == Steps.Length - 1 && CurrentStep.IsCompleted)
+            // Check for equality here as in the final step completion we still call NextStep, which advances the index one last time
+            if (currentStepIdx == Steps.Length && (CurrentStep?.IsCompleted ?? true))
                 return true;
 
             return false;
         }
 
-        public bool Complete() => TryAdvanceState(QuestState.COMPLETED);
+        #region IEquatable - based on QuestInformation
+
+        public bool Equals(Quest other)
+        {
+            if (other is null) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return base.Equals(other) && Equals(Information, other.Information);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is null) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((Quest)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(base.GetHashCode(), Information);
+        }
+
+        #endregion
+
+        #region IComparable - based on QuestInformation
+
+        public int CompareTo(Quest other)
+        {
+            if (ReferenceEquals(this, other)) return 0;
+            if (other is null) return 1;
+            return Comparer<QuestInformation>.Default.Compare(Information, other.Information);
+        }
+
+        #endregion
     }
 }

@@ -20,7 +20,6 @@ namespace giorgiokalmund.Dora.Editor
             Quest quest = (Quest)target;
             DrawDefaultInspector();
 
-            
             InternalErrorMessages = quest.GetInternalValidationResult();
 
             if (InternalErrorMessages?.Length == 0)
@@ -34,7 +33,7 @@ namespace giorgiokalmund.Dora.Editor
                         EditorGUI.BeginDisabledGroup(questState.Equals(quest.State));
                         if (GUILayout.Button($"{questState}"))
                         {
-                            quest.State = questState;
+                            quest.TrySetState(questState);
                         }
                         EditorGUI.EndDisabledGroup();
                     }
@@ -43,7 +42,10 @@ namespace giorgiokalmund.Dora.Editor
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("Try Advance State"))
                 {
-                    quest.TryAdvanceState();
+                    if (quest.TryAdvanceState(out QuestState newState))
+                        DoraLogger.Log($"Advanced Quest {quest.Information.Title} to {newState}");
+                    else
+                        DoraLogger.LogWarning($"Could not advance quest {quest.Information.Title}");
                 }
                 GUILayout.EndHorizontal();
 
@@ -56,7 +58,7 @@ namespace giorgiokalmund.Dora.Editor
                         ValidationErrorMessages.AddRange(res);
                     validatedAtLeastOnce = true;
                 }
-                EditorGUI.BeginDisabledGroup(!quest.BaseRequirements);
+                EditorGUI.BeginDisabledGroup(!quest.BaseStep);
                 if (GUILayout.Button("Validate Base + Steps"))
                 {
                     ValidationErrorMessages.Clear();
@@ -68,13 +70,13 @@ namespace giorgiokalmund.Dora.Editor
                 EditorGUI.EndDisabledGroup();
                 GUILayout.EndHorizontal();
 
-                if (quest.BaseRequirements)
+                if (quest.BaseStep)
                 {
                     EditorGUILayout.Separator();
                     GUILayout.Label("<b>BASE REQUIREMENT</b>", QuestDrawer.RichText);
-                    if (!quest.BaseRequirements.CanBeAchieved)
+                    if (!quest.BaseStep.CanBeAchieved)
                         QuestDrawer.RichText.normal.textColor = disabledColor;
-                    GUILayout.Label($"{quest.BaseRequirements.GetDescription()}", QuestDrawer.RichText);
+                    GUILayout.Label($"{quest.BaseStep.GetDescription()}", QuestDrawer.RichText);
                     QuestDrawer.RichText.normal.textColor = defaultColor;
                 }
                 
@@ -86,7 +88,7 @@ namespace giorgiokalmund.Dora.Editor
                     {
                         if (!quest.Steps[i].IsCompleted)
                             QuestDrawer.RichText.normal.textColor = disabledColor;
-                        GUILayout.Label($"{i+1}) {quest.Steps[i].Requirements?.GetDescription() ?? "<color=red><NO REQUIREMENTS></color>"}", QuestDrawer.RichText);
+                        GUILayout.Label($"{i+1}) {quest.Steps[i].GetDescription() ?? "<color=red><NO REQUIREMENTS></color>"}", QuestDrawer.RichText);
                         QuestDrawer.RichText.normal.textColor = defaultColor;
                     }
                 }
@@ -96,7 +98,7 @@ namespace giorgiokalmund.Dora.Editor
                 EditorGUILayout.Separator();
                 GUILayout.Label("<b>INTERNAL ERRORS</b>", QuestDrawer.RichText);
                 foreach (var currentErrorMessage in InternalErrorMessages)
-                    GUILayout.Label(currentErrorMessage, QuestDrawer.ErrorText);
+                    GUILayout.Label($"- {currentErrorMessage}", QuestDrawer.ErrorText);
             }
 
             

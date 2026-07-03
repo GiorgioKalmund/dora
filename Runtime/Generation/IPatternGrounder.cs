@@ -25,7 +25,7 @@ namespace giorgiokalmund.Dora.Generation
             }
             else
             {
-                QuestLogger.LogWarning("Raycast failed!");
+                DoraLogger.LogWarning("Raycast failed!");
             }
         }
 

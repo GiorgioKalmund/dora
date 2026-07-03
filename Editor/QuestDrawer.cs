@@ -51,22 +51,6 @@ namespace giorgiokalmund.Dora.Editor
         }
         #endregion
         
-        public static void DrawQuestStep(QuestStep step, ref bool showDebug)
-        {
-            showDebug = EditorGUILayout.Foldout(showDebug, "Debug");
-            if (showDebug)
-            {
-                if (GUILayout.Button(step.IsCompleted ? "Undo Completion" : "Complete"))
-                {
-                    step.DebugSetCompleted(!step.IsCompleted);
-                }
-                if (GUILayout.Button("Reset Step"))
-                {
-                    step.Requirements.ResetRequirements();
-                }
-            }
-        }
-
         public static void DrawGenerationTester([CanBeNull] GenerationPattern patternToGenerate)
         {
             if (!patternToGenerate)

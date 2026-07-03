@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace giorgiokalmund.Dora.Requirements
 {
-    public abstract class QuestTargetRequirement<T> : QuestRequirements, IDonator<T> where T : IComparable
+    public abstract class QuestTargetStep<T> : QuestStep, IDonator<T> where T : IComparable
     {
         [field: SerializeField, Tooltip("")]
         public T[] Targets { get; protected set; }
@@ -36,17 +36,17 @@ namespace giorgiokalmund.Dora.Requirements
             return match;
         }
 
-        public bool Receive(T donation)
+        public bool Receive(T receivedAnchorID)
         {
-            if (!Targets.Contains(donation))
+            if (!Targets.Contains(receivedAnchorID))
                 return false;
-            if (Collected.Contains(donation))
+            if (Collected.Contains(receivedAnchorID))
                 return false;
             
-            Collected.Add(donation);
+            Collected.Add(receivedAnchorID);
             
             if (CanBeCompleted)
-                OnComplete.Invoke();
+                Complete();
             
             return true;
         }

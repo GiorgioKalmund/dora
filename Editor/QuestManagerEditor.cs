@@ -29,7 +29,7 @@ namespace giorgiokalmund.Dora.Editor
 
             }
 
-            if (_failedQuests.Count == 0)
+            if (_failedQuests.Count == 0 && manager.all != null)
             {
                 GUILayout.Label($"All {manager.all.Length} Quests OK", QuestDrawer.OkText);
             }

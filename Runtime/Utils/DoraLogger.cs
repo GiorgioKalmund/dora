@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace giorgiokalmund.Dora
 {
-    public static class QuestLogger
+    public static class DoraLogger
     {
         private static readonly Color LoggingColor = Color.cyan;
 

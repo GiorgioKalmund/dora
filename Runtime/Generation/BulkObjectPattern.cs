@@ -57,7 +57,7 @@ namespace giorgiokalmund.Dora.Generation
         {
             if (Generated == null)
             {
-                QuestLogger.LogWarning($"Cannot update [{GetType().Name}]. No generated items.");
+                DoraLogger.LogWarning($"Cannot update [{GetType().Name}]. No generated items.");
                 return;
             }
 
@@ -69,7 +69,7 @@ namespace giorgiokalmund.Dora.Generation
                     var find = GenerationMember.Find(genId);
                     if (!find)
                     {
-                        QuestLogger.LogWarning($"Could not find matching generated object for {genId}. Removing it from list of managed entries.");
+                        DoraLogger.LogWarning($"Could not find matching generated object for {genId}. Removing it from list of managed entries.");
                         keysToRemove.Add(genId);
                         continue;
                     }
@@ -77,8 +77,8 @@ namespace giorgiokalmund.Dora.Generation
                     Generated[genId] = find;
                 }
 
-                if (Generated.TryGetValue(genId, out var obj))
-                    obj?.GetComponent<LocationMember>()?.FindClosestAnchor();
+                if (Generated.TryGetValue(genId, out var obj) && obj != null && obj.gameObject != null && obj.gameObject.TryGetComponent(out LocationMember locMember))
+                    locMember.FindClosestAnchor();
                 else
                     keysToRemove.Add(genId);
             }

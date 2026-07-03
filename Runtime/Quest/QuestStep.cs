@@ -1,69 +1,70 @@
 using System;
-using NaughtyAttributes;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace giorgiokalmund.Dora
 {
     [Serializable]
-    public class QuestStep 
+    public abstract class QuestStep : ScriptableObject
     {
-        [field: ReadOnly]
-        [field: SerializeField, Tooltip("Whether this step has been completed.")]
-        public bool IsCompleted { get; protected set; }
+        [field: SerializeField, Tooltip("Whether to automatically validate the requirements in the editor.")]
+        public bool SkipValidation { get; protected set; }
         
-        [field: SerializeField, Tooltip("Requirements to which need to be in place for the quest to be viable.")]
-        [field: Expandable]
-        public QuestRequirements Requirements { get; protected set; }
+        [field: SerializeField, Tooltip("Whether this requirement should be hidden from the player / user. Some events might not fire if this is set to true.")]
+        public bool IsHidden { get; protected set; }
+        
+        [field: SerializeField, Tooltip("Whether this requirement should be hidden from the player / user. Some events might not fire if this is set to true.")]
+        public bool IsCompleted { get; protected set; }
 
-        internal UnityEvent OnComplete = new UnityEvent();
+        /// Whether it is possible for the requirements to be achieved.
+        public bool CanBeAchieved => HandleValidation().IsSuccess;
 
-        private void OnValidate()
+        public bool CanBeCompleted => CheckCompletion();
+
+        // TODO: Maybe make event such that += is enforced and no children call invoke it directly and are instead forced to call Complete();
+        [NotNull] internal UnityEvent OnComplete = new ();
+        
+        [NotNull]
+        protected abstract QuestValidationInformation HandleValidation();
+
+        [NotNull]
+        internal QuestValidationInformation Validate()
         {
-            // TODO:
-            /*
-            if (Requirements == null)
-                IsCompleted = false;
-            else if (!IsCompleted && Requirements.OnComplete.GetPersistentEventCount() == 0)
-                Requirements?.OnComplete.AddListener(HandleRequirementsCompleted); 
-                */
+            if (!SkipValidation)
+                return HandleValidation();
+            return QuestValidationInformation.Success();
         }
 
-        private void HandleRequirementsCompleted()
+        protected void Complete()
         {
-            Debug.Log("requirements completed!");
+            if (IsCompleted)
+            {
+                DoraLogger.LogWarning($"Cannot complete quest step {ToString()}. Already completed");
+                return;
+            }
             IsCompleted = true;
             OnComplete.Invoke();
         }
 
-        public bool TryDonate(object donation)
+        public void Reset()
         {
-            if (Requirements is IDonator donator)
-                if (donator.CanDonate(donation))
-                    return donator.Donate(donation);
-                else
-                    QuestLogger.LogWarning($"QuestStep {Requirements.name} currently does not take any donations.");
-            else 
-                QuestLogger.LogWarning($"QuestStep {Requirements.name} cannot be donated to.");
+            SkipValidation = false;
+            IsHidden = false;
+            IsCompleted = false;
+            ResetRequirements();
+        }
 
-            return false;
-        }
-        
-        public bool TryDonateQuick()
+        internal abstract string GetDescription();
+
+        protected virtual bool CheckCompletion() { return true; }
+
+        /// <summary>
+        /// Resets the quest requirement to its starting state. All variables which track progress should be reset.
+        /// </summary>
+        public virtual void ResetRequirements()
         {
-            if (Requirements is IQuickDonator donator)
-                return donator.QuickDonate();
             
-            QuestLogger.LogWarning($"QuestStep {Requirements.name} cannot be donated to.");
-            return false;
         }
-        
-        #if DEBUG
-        public void DebugSetCompleted(bool c)
-        {
-            IsCompleted = c;
-        }
-        #endif
-        
     }
 }

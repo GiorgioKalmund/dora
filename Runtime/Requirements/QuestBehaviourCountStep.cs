@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace giorgiokalmund.Dora.Requirements
 {
-    public class QuestBehaviourCountRequirement<T> : QuestCountRequirement<T>, IPatternGenerator  where T : MonoBehaviour
+    public class QuestBehaviourCountStep<T> : QuestCountStep<T>, IPatternGenerator  where T : MonoBehaviour
     {
         [field: SerializeField, Tooltip("The currently collected units.")]
         [field: ReadOnly]
@@ -14,9 +14,9 @@ namespace giorgiokalmund.Dora.Requirements
 
         [SerializeField] [CanBeNull] protected GenerationPattern generationPattern;
         
-        public QuestBehaviourCountRequirement(int amount, CountMode mode = CountMode.MINIMUM) : base(amount, mode) { Collected = new List<T>(); }
+        public QuestBehaviourCountStep(int amount, CountMode mode = CountMode.MINIMUM) : base(amount, mode) { Collected = new List<T>(); }
 
-        public QuestBehaviourCountRequirement() { Collected = new List<T>(); }
+        public QuestBehaviourCountStep() { Collected = new List<T>(); }
 
         protected override QuestValidationInformation HandleValidation()
         {

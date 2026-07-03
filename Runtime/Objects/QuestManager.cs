@@ -1,7 +1,8 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
+using giorgiokalmund.Dora.Requirements;
 using giorgiokalmund.Dora.Utils;
-using JetBrains.Annotations;
+using SpaceFoundationSystem;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,67 +13,90 @@ namespace giorgiokalmund.Dora
     /// </summary>
     public class QuestManager : MonoBehaviour, IComponentOwner
     {
-        [field: SerializeField]
-        public Quest[] all;
-
+        public static QuestManager Current { get; private set; }
+        
         public UnityEvent<Quest, QuestState> onQuestStateChanged;
 
+        private LocationMember _mainActor;
+        
+        [SerializeField] public Quest[] all;
+        
         #region Filtered Quests
-        public Quest[] Unknown => all.Where(q => q.State == QuestState.UNKNOWN).ToArray();
-        public Quest[] Mentioned => all.Where(q => q.State == QuestState.MENTIONED).ToArray();
-        public Quest[] Accepted => all.Where(q => q.State == QuestState.ACCEPTED).ToArray();
-        public Quest[] Achieved => all.Where(q => q.State == QuestState.ACHIEVED).ToArray();
-        public Quest[] Completed => all.Where(q => q.State == QuestState.COMPLETED).ToArray();
+        private Quest[] Unknown => all?.Where(q => q.State == QuestState.UNKNOWN).ToArray();
+        private Quest[] Mentioned => all?.Where(q => q.State == QuestState.MENTIONED).ToArray();
+        private Quest[] Accepted => all?.Where(q => q.State == QuestState.ACCEPTED).ToArray();
+        private Quest[] Achieved => all?.Where(q => q.State == QuestState.ACHIEVED).ToArray();
+        private Quest[] Completed => all?.Where(q => q.State == QuestState.COMPLETED).ToArray();
         #endregion
 
-        public static QuestManager Instance;
 
         protected void Awake()
         {
-            if (Instance && Instance != this)
-                Destroy(Instance.gameObject);
-            else
-                Instance = this;
+            if (Current)
+            {
+                DoraLogger.LogError("There is already a quest manager registered in the scene.", this);
+                return;
+            }
+            Current = this;
         }
-
-        public bool TryDonateToQuest(string id, object value)
-        {
-            return TryGetQuest(id)?.TryDonate(value) ?? false;
-        }
-
-        public bool TryDonateToQuestQuick(string id)
-        {
-            return TryGetQuest(id)?.TryDonateQuick() ?? false;
-        }
-
-        [CanBeNull]
-        public Quest TryGetQuest(string questId)
-        {
-            return all.FirstOrDefault(q => q.Information?.Id.Equals(questId) ?? false);
-        }
-
-        private void OnValidate()
+        
+        private void Start()
         {
             if (all == null)
                 return;
             foreach (var quest in all)
                 quest?.AddTo(this);
+            
+            foreach (var quest in all)
+                quest.InitForScene();
+
+            // TODO: Proper in-world starting etc
+            all[0].Reset();
+            StartQuest(all[0]);
         }
 
-        public bool TryUpdateAnyQuestWith(object value)
+        public void RegisterMainActor(LocationMember locationMember)
         {
-            if (all.Length == 0)
+            _mainActor = locationMember;
+            _mainActor.onLocationChanged.AddListener(HandleMainActorLocationChanged);
+        }
+        
+        public void UnregisterMainActor(LocationMember locationMember)
+        {
+            if (locationMember != _mainActor)
             {
-                QuestLogger.LogWarning($"[{GetType()}]: QuestManager has no quests!");
+                Debug.LogError($"Trying to deinitialize QuestManager with different main actor ('{locationMember.gameObject.name}') than what it was initialized with ('{_mainActor.gameObject.name}')");
+                return;
+            }
+            locationMember.onLocationChanged.RemoveListener(HandleMainActorLocationChanged);
+        }
+
+        private void HandleMainActorLocationChanged(Anchor newLocation)
+        {
+            var currentLocations = Accepted.Select(s => s.CurrentStep).Where(r => r is LocationStep);
+
+            foreach (var req in currentLocations)
+            {
+                if (req is LocationStep locationRequirement)
+                    locationRequirement.Receive(newLocation.GetUniqueId());
+            }
+        }
+
+        public bool StartQuest(Quest quest)
+        {
+            if (!all.Contains(quest))
+            {
+                DoraLogger.LogError($"Cannot start {quest.Information}. Not tracked by manager.");
                 return false;
             }
 
-            bool success = false;
-            foreach (var q in all)
-                if (q.TryDonate(value))
-                    success = true;
+            if (!quest.TrySetState(QuestState.ACCEPTED))
+            {
+                DoraLogger.LogError($"Cannot start {quest.Information}.");
+                return false;
+            }
 
-            return success;
+            return true;
         }
 
         public void AddComponent<T>(BaseComponent<T> component) where T : IComponentOwner
@@ -80,7 +104,7 @@ namespace giorgiokalmund.Dora
             var casted = component as Quest;
             if (casted is null)
             {
-                QuestLogger.LogError($"[{GetType()}]: Cannot add {component} as component. Incompatible controller type.");
+                DoraLogger.LogError($"[{GetType()}]: Cannot add {component} as component. Incompatible controller type.");
             }
         }
     }

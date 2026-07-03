@@ -29,19 +29,10 @@ namespace giorgiokalmund.Dora.Generation.StdLib
         [SerializeField] 
         [Tooltip("Bounding mesh taken from an anchors corresponding region in the SFS graph.")]
         [ShowIf("genMode", GenerationMode.ANCHOR)] 
-        [ValidateInput(nameof(ValidAnchorId), "Anchor id invalid")]
-        [Dropdown("AnchorNames")]
-        internal string anchorId;
-        private MeshCollider _anchorMeshCollider;
-        
-        private bool ValidAnchorId(string id) { return !string.IsNullOrEmpty(id) && (SpaceFoundation.Current?.ValidAnchorId(id) ?? false); }
-        private string GetAnchorDescription()
-        {
-            var anchor = SpaceFoundation.Current.TryGetAnchor(anchorId);
-            return (ValidAnchorId(anchorId) && anchor ? $"{anchor.name}" : "Unknown Location");
-        }
-        private List<string> AnchorNames => SpaceFoundation.Current?.GetAnchors()?.Keys.ToList() ?? new List<string>();
-        [ShowNativeProperty] private string BoundTo => GetAnchorDescription();
+        [Dropdown("AllAnchors")]
+        internal Anchor anchor;
+
+        private List<Anchor> AllAnchors => SpaceFoundation.Current?.GetAnchors()?.Values.ToList() ?? new List<Anchor>();
         #endregion
 
         #region Collider
@@ -70,38 +61,21 @@ namespace giorgiokalmund.Dora.Generation.StdLib
             {
                 case GenerationMode.ANCHOR:
                 {
-                    if (!string.IsNullOrEmpty(anchorId))
+                    if (anchor)
                     {
-                        if (!_anchorMeshCollider)
-                            _anchorMeshCollider = FindObjectsByType<Space>().FirstOrDefault(s => s.anchor.GetUniqueId().Equals(anchorId))?.gameObject.GetComponent<MeshCollider>();
-                        if (!_anchorMeshCollider)
-                        {
-                            QuestLogger.LogWarning("Cannot find appropriate location to generate content!");
-                            return Vector3.zero;
-                        }
-                        
-                        //Debug.Log($"Searching inside mesh collider of {_anchorMeshCollider.gameObject.name}");
-                        var bounds = _anchorMeshCollider.bounds;
-                        var margin = 1f;
-                        Vector3 randomPoint;
-                        do
-                        {
-                            randomPoint = new Vector3(
-                                Random.Range(bounds.min.x + margin, bounds.max.x - margin),
-                                bounds.center.y,
-                                Random.Range(bounds.min.z + margin, bounds.max.z - margin)
-                            );
-                        } while (!IsInside(_anchorMeshCollider, randomPoint));
-                        return randomPoint;
+                        // TODO: SubspacePositions is only temporary. No way to access all voxels for an anchor?
+                        // TODO: ElementAt is O(N). Maybe for enough calls we can convert to list once and then sample O(1) 
+                        return anchor.SubspacePositions.ElementAt(Random.Range(0, anchor.SubspacePositions.Count));
                     }
                     
-                    QuestLogger.LogWarning("No location provided!");
-                    return Vector3.zero;
+                    DoraLogger.LogWarning("No location provided!");
+                    break;
                 }
                 case GenerationMode.COLLIDER:
                 {
                     if (GenerateInstance())
                     {
+                        // TODO: Rejection sampling not optimal
                         var bounds = _customCollider.bounds;
                         var margin = 1f;
                         Vector3 randomPoint;
@@ -115,7 +89,7 @@ namespace giorgiokalmund.Dora.Generation.StdLib
                         } while (!IsInside(_customCollider, randomPoint));
                         return randomPoint;
                     }
-                    return Vector3.zero;
+                    break;
                 }
                 case GenerationMode.SPHERE:
                 {
@@ -149,7 +123,7 @@ namespace giorgiokalmund.Dora.Generation.StdLib
         {
             switch (genMode)
             {
-                case GenerationMode.ANCHOR: return ValidAnchorId(anchorId);
+                case GenerationMode.ANCHOR: return anchor;
                 case GenerationMode.COLLIDER: return _customCollider;
                 default: return true;
             }
@@ -160,8 +134,6 @@ namespace giorgiokalmund.Dora.Generation.StdLib
             base.Clear();
             if (_customCollider)
                 DestroyImmediate(_customCollider.gameObject);
-            if (_anchorMeshCollider)
-                _anchorMeshCollider.convex = false;
         }
 
         private bool GenerateInstance()
@@ -173,7 +145,7 @@ namespace giorgiokalmund.Dora.Generation.StdLib
                 _customCollider = go.GetComponent<Collider>();
                 if (!_customCollider)
                 {
-                    QuestLogger.LogWarning("Cannot generate bounds as instance has no collider!");
+                    DoraLogger.LogWarning("Cannot generate bounds as instance has no collider!");
                     return false;
                 }
             }

@@ -23,12 +23,7 @@ MonoBehaviour:
   explicitDelimiters:
     entries: []
   implicitDelimiters:
-    entries:
-    - Key: a1
-      Value:
-        Array:
-        - a0
-        - a1
+    entries: []
   anchorStringToIntIdDict:
     entries:
     - Key: _
@@ -50,4 +45,4 @@ MonoBehaviour:
     - Key: a0
       Value: {x: -7, y: 2, z: -6}
     - Key: a1
-      Value: {x: 5, y: 2, z: 5}
+      Value: {x: 4, y: 2, z: 6}

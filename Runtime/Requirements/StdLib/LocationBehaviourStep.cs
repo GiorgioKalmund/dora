@@ -24,7 +24,7 @@ namespace giorgiokalmund.Dora.Requirements
     }
     
     [CreateAssetMenu(fileName = "LocationBehaviours", menuName = "Dora/Requirements/LocationBehaviours")]
-    public class LocationBehaviourRequirement : LocationRequirement, IPatternGenerator
+    public class LocationBehaviourStep : LocationStep, IPatternGenerator
     {
         [SerializeField] protected SerializableDictionary<GameObject, CountTracker> requiredObjects;
         [SerializeField] protected SerializableDictionary<MonoScript, CountTracker> requiredBehaviours;
@@ -44,9 +44,8 @@ namespace giorgiokalmund.Dora.Requirements
             if (result.IsFailure)
                 return result;
 
-            Anchor anchor = SpaceFoundation.TryGetAnchor(forLocation);
-            if (!anchor) // TODO: Anchor data not filled in!
-                return QuestValidationInformation.Failure( $"Could not get anchor object to validate location containment. Is the data properly set up?");
+            if (!SpaceFoundation.Current.TryGetAnchor(anchorID, out Anchor anchor))
+                return QuestValidationInformation.Failure($"Could not find anchor '{anchorID}' in scene.");
 
             var objects = requiredObjects.ToDictionary();
             if (objects != null)
@@ -54,17 +53,17 @@ namespace giorgiokalmund.Dora.Requirements
                 foreach ((GameObject prefab, CountTracker tracker) in objects)
                 {
                     // Primary check: Quick connected anchor comparison, else broader slower check for prefab instances.
-                    var instances = FindObjectsByType<LocationMember>().Where(m => anchor.Equals(m.connectedAnchor) || prefab.Equals(PrefabUtility.GetCorrespondingObjectFromOriginalSource(m.gameObject))).ToList();
+                    var instances = FindObjectsByType<LocationMember>().Where(m => anchor.Equals(m.currentLocation) || prefab.Equals(PrefabUtility.GetCorrespondingObjectFromOriginalSource(m.gameObject))).ToList();
                     foreach (var locationMember in instances)
                         locationMember.FindClosestAnchor();
                     // Secondary check: Ensure all found instances are actually contained within the location
                     var containing = instances.Where(go => anchor.Equals(go.gameObject.transform.DetermineLocation())).ToList(); 
                     int objectCount = containing.Count;
                     if (objectCount < tracker.count)
-                        return QuestValidationInformation.Failure($"Not enough {prefab.name} present at {anchor.gameObject.name} ({forLocation}). Expected {tracker.count}, got {objectCount}.");
+                        return QuestValidationInformation.Failure($"Not enough {prefab.name} present at {anchor.gameObject.name} ({anchorID}). Expected {tracker.count}, got {objectCount}.");
             
                     if (tracker.mode == CountMode.EXACT && objectCount > tracker.count)
-                        return QuestValidationInformation.Failure($"Not exact amount of {prefab.name} present at {anchor.gameObject.name} ({forLocation}). Expected {tracker.count}, got {objectCount}.");
+                        return QuestValidationInformation.Failure($"Not exact amount of {prefab.name} present at {anchor.gameObject.name} ({anchorID}). Expected {tracker.count}, got {objectCount}.");
                 }
             }
             
@@ -81,10 +80,10 @@ namespace giorgiokalmund.Dora.Requirements
                     var containing = instances.Where(go => anchor.Equals(go.gameObject.transform.DetermineLocation())).ToList();
                     int objectCount = containing.Count;
                     if (objectCount < tracker.count)
-                        return QuestValidationInformation.Failure($"Not enough {script.GetClass().Name} present at {anchor.gameObject.name} ({forLocation}). Expected {tracker.count}, got {objectCount}.");
+                        return QuestValidationInformation.Failure($"Not enough {script.GetClass().Name} present at {anchor.gameObject.name} ({anchorID}). Expected {tracker.count}, got {objectCount}.");
             
                     if (tracker.mode == CountMode.EXACT && objectCount > tracker.count)
-                        return QuestValidationInformation.Failure($"Not exact amount of {script.GetClass().Name} present at {anchor.gameObject.name} ({forLocation}). Expected {tracker.count}, got {objectCount}.");
+                        return QuestValidationInformation.Failure($"Not exact amount of {script.GetClass().Name} present at {anchor.gameObject.name} ({anchorID}). Expected {tracker.count}, got {objectCount}.");
                 }
             }
             

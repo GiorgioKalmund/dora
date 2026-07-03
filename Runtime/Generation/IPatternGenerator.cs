@@ -8,7 +8,7 @@ namespace giorgiokalmund.Dora.Generation
         {
             if (!pattern)
             {
-                QuestLogger.LogWarning("Please provide a pattern to generate.");
+                DoraLogger.LogWarning("Please provide a pattern to generate.");
                 return;
             }
             pattern.Generate();
