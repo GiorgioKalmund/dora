@@ -1,0 +1,108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &8483590712452191945
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5516910290216186599, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_Name
+      value: QuestMarker3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344144569631520011, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344144569631520011, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344144569631520011, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344144569631520011, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344144569631520011, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344144569631520011, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344144569631520011, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344144569631520011, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344144569631520011, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344144569631520011, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 8095729740857410792, guid: 513d07c87c26c45d3a3724f1a44aff60, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5516910290216186599, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 658660785830864483}
+  m_SourcePrefab: {fileID: 100100000, guid: 513d07c87c26c45d3a3724f1a44aff60, type: 3}
+--- !u!23 &1559429964097987618 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6926520302594503403, guid: 513d07c87c26c45d3a3724f1a44aff60,
+    type: 3}
+  m_PrefabInstance: {fileID: 8483590712452191945}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &2635519076729435110 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 5848199461875819823, guid: 513d07c87c26c45d3a3724f1a44aff60,
+    type: 3}
+  m_PrefabInstance: {fileID: 8483590712452191945}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4119602217022678062 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5516910290216186599, guid: 513d07c87c26c45d3a3724f1a44aff60,
+    type: 3}
+  m_PrefabInstance: {fileID: 8483590712452191945}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &658660785830864483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4119602217022678062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03911803cae1480bb3dc72bbe3067cf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.QuestMarker3
+  quest: {fileID: 0}
+  markerArea: {fileID: 2635519076729435110}
+  visuals: {fileID: 1559429964097987618}

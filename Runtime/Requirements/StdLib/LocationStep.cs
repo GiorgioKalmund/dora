@@ -11,10 +11,10 @@ namespace giorgiokalmund.Dora.Requirements
         [SerializeField] protected SpaceFoundationData spaceFoundationData;
         private bool HasData => spaceFoundationData != null;
         
-        [Dropdown(nameof(availableAnchors))]
+        [Dropdown(nameof(AvailableAnchors))]
         [ShowIf(nameof(HasData))]
         [SerializeField] protected string anchorID;
-        private string[] availableAnchors => spaceFoundationData?.anchors.ToDictionary().Keys.ToArray() ?? new string[]{};
+        private string[] AvailableAnchors => spaceFoundationData?.anchors.entries.Select(e => e.Key).ToArray() ?? new string[]{};
 
         protected override QuestValidationInformation HandleValidation()
         {
@@ -27,7 +27,17 @@ namespace giorgiokalmund.Dora.Requirements
 
         public override string GetDescription()
         {
-            return $"Visit {anchorID}";
+            return $"Visit {GetAnchorNameOrWarning()}";
+        }
+
+        private string GetAnchorNameOrWarning()
+        {
+            if (SpaceFoundation.Current.TryGetAnchor(anchorID, out var anchor))
+            {
+                return anchor.name;
+            }
+
+            return $"<color=red>{anchorID} not part of the SFS!</color>";
         }
 
         public bool Receive(string receivedAnchorID)

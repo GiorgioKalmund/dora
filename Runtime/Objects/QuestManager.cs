@@ -73,7 +73,7 @@ namespace giorgiokalmund.Dora
 
             foreach (var req in currentLocations)
             {
-                if (req is IDonator<string> donator)
+                if (req is LocationStep donator)
                     donator.Receive(newLocation.GetUniqueId());
             }
         }
@@ -81,7 +81,19 @@ namespace giorgiokalmund.Dora
         public bool MentionQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.MENTIONED);
         public bool StartQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.ACCEPTED);
         public bool CompleteQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.COMPLETED);
-      
+        public bool AdvanceQuest(Quest quest) => AdvanceQuestStateInternal(quest);
+
+        private bool AdvanceQuestStateInternal(Quest quest)
+        {
+            if (!all.Contains(quest))
+            {
+                DoraLogger.LogError($"Cannot advance {quest.Information}. Not tracked by this QuestManager.", this);
+                return false;
+            }
+
+            return quest.TryAdvanceState(out _);
+        }
+
 
         private bool SetQuestStateInternal(Quest quest, QuestState state)
         {
