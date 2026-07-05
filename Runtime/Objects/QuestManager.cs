@@ -74,11 +74,12 @@ namespace giorgiokalmund.Dora
 
         private void PropagateLocationToMainActorLocationSteps(Anchor newLocation)
         {
-            var currentLocations = Accepted.Select(s => s.CurrentStep).Where(r => r is LocationStep);
+            // TODO: Very Bad
+            var currentLocations = Accepted.Select(s => s.CurrentStep).Where(r => r is LocationStep || r is LocationPathStep);
 
             foreach (var req in currentLocations)
             {
-                if (req is LocationStep donator)
+                if (req is IDonator<string> donator)
                     donator.Receive(newLocation.GetUniqueId());
             }
         }

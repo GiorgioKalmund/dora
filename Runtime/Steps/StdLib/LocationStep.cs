@@ -21,7 +21,7 @@ namespace giorgiokalmund.Dora.Requirements
             if (!spaceFoundationData)
                 return QuestValidationInformation.Failure("No SpaceFoundation Data!");
             if (!spaceFoundationData.anchors.Contains(anchorID))
-                return QuestValidationInformation.Failure($"The anchorsID '{anchorID}' is not part of the provided SpaceFoundationData {spaceFoundationData.name}");
+                return QuestValidationInformation.Failure($"The anchorID '{anchorID}' is not part of the provided SpaceFoundationData {spaceFoundationData.name}");
             return QuestValidationInformation.Success();
         }
 
