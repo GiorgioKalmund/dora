@@ -8,7 +8,9 @@ namespace giorgiokalmund.Dora.Requirements
         /// The requirement amount must be EXACTLY EQUAL to the amount of objects found.
         EXACT,
         /// The requirement amount must be AT LEAST EQUAL to the amount of objects found.
-        MINIMUM
+        MINIMUM,
+        /// The requirement amount must be NO MORE THAN the amount of objects found.
+        MAXIMUM 
     }
 
     public abstract class QuestCountStep<T> : QuestStep, IDonator<T>
@@ -56,7 +58,18 @@ namespace giorgiokalmund.Dora.Requirements
 
         protected override bool CheckCompletion()
         {
-            return Mode == CountMode.EXACT ? CollectedAmount == RequiredAmount : CollectedAmount >= RequiredAmount;
+            switch (Mode)
+            {
+                case CountMode.MINIMUM:
+                    return CollectedAmount >= RequiredAmount;
+                case CountMode.EXACT:
+                    return CollectedAmount == RequiredAmount;
+                case CountMode.MAXIMUM:
+                    return CollectedAmount <= RequiredAmount;
+            }
+
+            DoraLogger.LogError("Unhandled CountMode!", this);
+            return false;
         }
 
         protected abstract bool HandleReceive(T element);

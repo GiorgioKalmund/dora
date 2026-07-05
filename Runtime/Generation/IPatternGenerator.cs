@@ -2,7 +2,7 @@ namespace giorgiokalmund.Dora.Generation
 {
     public interface IPatternGenerator
     {
-        internal GenerationPattern GetCurrentPattern();
+        public GenerationPattern GetCurrentPattern();
         public void GenerateSolution() => TryGenerate(GetCurrentPattern());
         virtual void TryGenerate(GenerationPattern pattern)
         {

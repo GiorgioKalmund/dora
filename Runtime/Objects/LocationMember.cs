@@ -1,3 +1,4 @@
+using NaughtyAttributes;
 using SpaceFoundationSystem;
 using UnityEngine;
 using UnityEngine.Events;
@@ -11,7 +12,8 @@ namespace giorgiokalmund.Dora
         [Header("SpaceFoundation")]
         [SerializeField, Tooltip("Optional reference to a SpaceFoundation, avoiding the need to re-search for it when trying to determine a location.")] 
         internal SpaceFoundation spaceFoundation;
-        [SerializeField, Tooltip("Whether to constantly check and update the member's location.")] private bool doUpdate = false;
+        [SerializeField, Tooltip("Whether to constantly check and update the member's location.")]
+        private bool doUpdate = true;
 
         public UnityEvent<Anchor> onLocationChanged = new UnityEvent<Anchor>();
         public UnityEvent<Anchor, Anchor> onLocationChangedWithPrevious = new UnityEvent<Anchor, Anchor>();

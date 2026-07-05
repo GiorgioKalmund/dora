@@ -69,6 +69,11 @@ namespace giorgiokalmund.Dora
 
         private void HandleMainActorLocationChanged(Anchor newLocation)
         {
+            PropagateLocationToMainActorLocationSteps(newLocation);
+        }
+
+        private void PropagateLocationToMainActorLocationSteps(Anchor newLocation)
+        {
             var currentLocations = Accepted.Select(s => s.CurrentStep).Where(r => r is LocationStep);
 
             foreach (var req in currentLocations)
@@ -79,7 +84,16 @@ namespace giorgiokalmund.Dora
         }
 
         public bool MentionQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.MENTIONED);
-        public bool StartQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.ACCEPTED);
+
+        public bool StartQuest(Quest quest)
+        {
+            // TODO: Maybe boolean which checks if we should auto check the location etc on quest start / step start...
+            var success = SetQuestStateInternal(quest, QuestState.ACCEPTED);
+            if (success)
+                PropagateLocationToMainActorLocationSteps(_mainActor.currentLocation);
+            
+            return success;
+        } 
         public bool CompleteQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.COMPLETED);
         public bool AdvanceQuest(Quest quest) => AdvanceQuestStateInternal(quest);
 

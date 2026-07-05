@@ -27,17 +27,7 @@ namespace giorgiokalmund.Dora.Requirements
 
         public override string GetDescription()
         {
-            return $"Visit {GetAnchorNameOrWarning()}";
-        }
-
-        private string GetAnchorNameOrWarning()
-        {
-            if (SpaceFoundation.Current.TryGetAnchor(anchorID, out var anchor))
-            {
-                return anchor.name;
-            }
-
-            return $"<color=red>{anchorID} not part of the SFS!</color>";
+            return $"Visit {SpaceFoundation.Current.GetAnchorName(anchorID)}";
         }
 
         public bool Receive(string receivedAnchorID)
