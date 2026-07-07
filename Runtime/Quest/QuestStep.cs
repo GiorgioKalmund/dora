@@ -24,6 +24,7 @@ namespace giorgiokalmund.Dora
 
         // TODO: Maybe make event such that += is enforced and no children call invoke it directly and are instead forced to call Complete();
         [NotNull] internal UnityEvent OnComplete = new ();
+        [NotNull] internal UnityEvent OnUpdated = new ();
         
         [NotNull]
         protected abstract QuestValidationInformation HandleValidation();
@@ -45,6 +46,11 @@ namespace giorgiokalmund.Dora
             }
             IsCompleted = true;
             OnComplete.Invoke();
+        }
+
+        protected void Update()
+        {
+            OnUpdated.Invoke();
         }
 
         public void Reset()

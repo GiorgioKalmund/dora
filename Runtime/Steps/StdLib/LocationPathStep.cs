@@ -1,3 +1,4 @@
+using System.Text;
 using NaughtyAttributes;
 using SpaceFoundationSystem;
 using UnityEngine;
@@ -16,6 +17,11 @@ namespace giorgiokalmund.Dora.Requirements
         [ShowIf(nameof(hasMaxDistance))]
         [ShowNonSerializedField]
         private float accumulatedDistance;
+        
+        /// <summary>
+        /// Used to create the path description (<see cref="PathDescription"/>). Cached to avoid recreating objects.
+        /// </summary>
+        StringBuilder _stringBuilder = new StringBuilder();
         
         [SerializeField] [field: ReadOnly] private int pathIndex;
         public int CurrentPathIdx => pathIndex;
@@ -56,8 +62,23 @@ namespace giorgiokalmund.Dora.Requirements
 
         public override string GetDescription()
         {
-            // TODO: 
-            return "TODO";
+            return CurrentPathIdx < path.Length 
+                ? $"Visit {SpaceFoundation.Current.GetAnchorName(CurrentPathID)}" 
+                : PathDescription;
+        }
+        
+        private string PathDescription {
+            get
+            {
+                _stringBuilder.Clear();
+                for (var i = 0; i < path.Length; i++)
+                {
+                    _stringBuilder.Append($"[{path[i]}]");
+                    if (i < path.Length - 1)
+                        _stringBuilder.Append("-");
+                }
+                return _stringBuilder.ToString();
+            }
         }
 
         public bool Receive(string receivedAnchorID)
@@ -67,6 +88,8 @@ namespace giorgiokalmund.Dora.Requirements
                 pathIndex++;
                 if (pathIndex == path.Length) 
                     Complete();
+                else
+                    Update();
                 return true;
             }
             

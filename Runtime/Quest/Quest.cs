@@ -48,6 +48,7 @@ namespace giorgiokalmund.Dora
 
         public UnityEvent<QuestState> onStateChanged = new ();
         public UnityEvent<QuestStep> onStepStarted = new ();
+        public UnityEvent<QuestStep> onStepUpdated = new ();
         public UnityEvent<QuestStep> onStepCompleted = new ();
         
         [CanBeNull]
@@ -69,6 +70,8 @@ namespace giorgiokalmund.Dora
         public void Reset()
         {
             State = QuestState.UNKNOWN;
+            onStateChanged.Invoke(State);
+            Manager?.onQuestStateChanged.Invoke(this, State);
             currentStepIdx = 0;
             IsBotched = false;
             IsHidden = false;
@@ -172,9 +175,11 @@ namespace giorgiokalmund.Dora
 
             if (CurrentStep != null)
                 onStepCompleted.Invoke(CurrentStep);
+            CurrentStep?.OnUpdated.RemoveListener(HandleCurrentStepUpdated);
             CurrentStep?.OnComplete.RemoveListener(HandleStepCompleted);
             currentStepIdx++;
             CurrentStep?.OnComplete.AddListener(HandleStepCompleted);
+            CurrentStep?.OnUpdated.AddListener(HandleCurrentStepUpdated);
             if (CurrentStep != null)
                 onStepStarted.Invoke(CurrentStep);
             return CurrentStep;
@@ -273,6 +278,11 @@ namespace giorgiokalmund.Dora
         {
             if (NextStep() == null)
                 TryAdvanceState(out _);
+        }
+        
+        private void HandleCurrentStepUpdated()
+        {
+            onStepUpdated.Invoke(CurrentStep);
         }
 
         internal void HandOutRewards()
