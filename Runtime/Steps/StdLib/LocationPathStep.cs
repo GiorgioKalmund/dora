@@ -48,9 +48,9 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                     Vector3Int anchorPosDiscretized = spaceFoundationData.anchorToVoxelPositionDict.Get(anchorID);
                     Vector3Int anchorPosNextDiscretized = spaceFoundationData.anchorToVoxelPositionDict.Get(path[i+1]);
                     
+                    accumulatedDistance += (anchorPosNextDiscretized - anchorPosDiscretized).magnitude;
                     if (hasMaxDistance)
                     {
-                        accumulatedDistance += (anchorPosNextDiscretized - anchorPosDiscretized).magnitude;
                         if (accumulatedDistance > maxDistance && overflowCandidate == null)
                             overflowCandidate = anchorID;
                     }

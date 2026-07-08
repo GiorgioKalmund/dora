@@ -52,20 +52,26 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         
         public override string GetDescription()
         {
+            if (stepPool == null)
+                return "<No sub-steps in this Pool!";
+            
             StringBuilder sb = new StringBuilder($"{mode}");
+            int completedCount = stepPool.Count(s => s.IsCompleted);
             if (mode == Mode.SPECIFIC)
-                sb.Append($" {specificStepCount}:\t");
+                sb.Append($" {completedCount}/{specificStepCount}:\t");
             else sb.Append(":\t");
             
             for (var i = 0; i < stepPool.Length; i++)
             {
+                if (stepPool[i].IsCompleted)
+                    continue;
                 if (stepPool.Length > 1)
                     sb.Append("(");
                 sb.Append(stepPool[i].GetDescription());
                 if (stepPool.Length > 1)
                     sb.Append(")");
                 
-                if (i < stepPool.Length - 1)
+                if (i < stepPool.Length - 1 && (stepPool.Length - completedCount > 1))
                 {
                     if (mode == Mode.ALL)
                         sb.Append(" && ");
@@ -91,7 +97,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                 return;
             
             foreach (var questStep in stepPool)
-                questStep.Reset();
+                questStep.ResetStep();
         }
 
         protected override bool CheckCompletion()
@@ -115,7 +121,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         {
             foreach (var questStep in stepPool)
             {
-                questStep.OnComplete.AddListener(_TryComplete);
+                questStep.OnComplete.AddListener(UpdateOrTryComplete);
                 questStep.OnQuestManagerInit();
             }
         }
@@ -125,10 +131,14 @@ namespace giorgiokalmund.Dora.Steps.StdLib
             foreach (var questStep in stepPool)
             {
                 questStep.OnQuestManagerDeinit();
-                questStep.OnComplete.RemoveListener(_TryComplete);
+                questStep.OnComplete.RemoveListener(UpdateOrTryComplete);
             }
         }
 
-        private void _TryComplete() => TryComplete();
+        private void UpdateOrTryComplete()
+        {
+            Update();
+            TryComplete();  
+        } 
     }
 }

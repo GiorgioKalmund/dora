@@ -42,7 +42,7 @@ namespace giorgiokalmund.Dora.Questing
         {
             switch (state)
             {
-                case QuestState.UNKNOWN: 
+                case QuestState.UNKNOWN: return Color.gray;
                 case QuestState.MENTIONED: return Color.hotPink;
                 case QuestState.ACCEPTED: return Color.deepSkyBlue;
                 case QuestState.ACHIEVED: return Color.yellow;

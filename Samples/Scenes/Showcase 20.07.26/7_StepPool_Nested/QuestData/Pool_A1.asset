@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be4546d11fab49378071c5feb6d8d82c, type: 3}
+  m_Name: Pool_A1
+  m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Steps.StdLib.StepPool
+  <SkipValidation>k__BackingField: 0
+  <IsCompleted>k__BackingField: 0
+  stepPool:
+  - {fileID: 11400000, guid: d8097635c1d4b436794c1aa5ea4b17a3, type: 2}
+  - {fileID: 11400000, guid: 99d829c392a2148d2b5f084941fa3f7a, type: 2}
+  mode: 0
+  specificStepCount: 0

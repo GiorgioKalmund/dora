@@ -60,7 +60,7 @@ namespace giorgiokalmund.Dora.Questing
             OnUpdated.Invoke();
         }
 
-        public void Reset()
+        public void ResetStep()
         {
             SkipValidation = false;
             IsCompleted = false;

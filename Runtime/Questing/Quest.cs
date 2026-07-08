@@ -5,6 +5,7 @@ using giorgiokalmund.Dora.Questing.Events;
 using giorgiokalmund.Dora.Utils;
 using JetBrains.Annotations;
 using NaughtyAttributes;
+using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -66,15 +67,16 @@ namespace giorgiokalmund.Dora.Questing
             Information.Title = name;
         }
         
-        public void Reset()
+        public void ResetQuest()
         {
             State = QuestState.UNKNOWN;
             onStateChanged.Invoke(State);
-            Manager?.onQuestStateChanged.Invoke(this, State);
+            Manager?.onQuestStateChanged?.Invoke(this, State);
             currentStepIdx = 0;
             IsBotched = false;
-            foreach (var questStep in Steps)
-                questStep.Reset();
+            if (Steps != null)
+                foreach (var questStep in Steps)
+                    questStep.ResetStep();
         }
 
         #region Validation
@@ -167,14 +169,13 @@ namespace giorgiokalmund.Dora.Questing
             }
 
             if (CurrentStep != null)
-                onStepCompleted.Invoke(CurrentStep);
-            CurrentStep?.OnUpdated.RemoveListener(HandleCurrentStepUpdated);
-            CurrentStep?.OnComplete.RemoveListener(HandleStepCompleted);
+                StepCompletedActions();
+            
             currentStepIdx++;
-            CurrentStep?.OnComplete.AddListener(HandleStepCompleted);
-            CurrentStep?.OnUpdated.AddListener(HandleCurrentStepUpdated);
+            
             if (CurrentStep != null)
-                onStepStarted.Invoke(CurrentStep);
+                StepStartedActions();
+            
             return CurrentStep;
         }
 
@@ -243,11 +244,8 @@ namespace giorgiokalmund.Dora.Questing
 
             if (State == QuestState.ACCEPTED)
             {
-                if (CurrentStep != null)
-                {
-                    CurrentStep.OnComplete.AddListener(HandleStepCompleted);
-                    onStepStarted.Invoke(CurrentStep);
-                }
+                Assert.IsNotNull(CurrentStep, $"Started the quest {Information} but the first step is null. This is not allowed! A quest must at least have one step if started during runtime.");
+                StepStartedActions();
             }
 
             if (State == QuestState.ACHIEVED && Rewards == null)
@@ -259,6 +257,22 @@ namespace giorgiokalmund.Dora.Questing
                 HandOutRewards();
             }
             return true;
+        }
+
+        private void StepStartedActions()
+        {
+            Assert.IsNotNull(CurrentStep, $"Started the step for quest {Information} but the step is somehow null.");
+            CurrentStep.OnComplete.AddListener(HandleStepCompleted);
+            CurrentStep.OnUpdated.AddListener(HandleCurrentStepUpdated);
+            onStepStarted.Invoke(CurrentStep);
+        }
+
+        private void StepCompletedActions()
+        {
+            Assert.IsNotNull(CurrentStep, $"Completed the step of {Information} but the step is somehow null.");
+            onStepCompleted.Invoke(CurrentStep);
+            CurrentStep.OnUpdated.RemoveListener(HandleCurrentStepUpdated);
+            CurrentStep.OnComplete.RemoveListener(HandleStepCompleted);
         }
 
         internal bool Botch()

@@ -15,7 +15,7 @@ namespace giorgiokalmund.Dora
     {
         public static QuestManager Current { get; private set; }
         
-        public UnityEvent<Quest, QuestState> onQuestStateChanged;
+        public UnityEvent<Quest, QuestState> onQuestStateChanged = new UnityEvent<Quest, QuestState>();
 
         private GameplayEventBus _eventBus;
         public static GameplayEventBus EventBus => Current?._eventBus;

@@ -7,8 +7,13 @@ namespace giorgiokalmund.Dora
     {
         private static readonly Color LoggingColor = Color.cyan;
 
+        public const bool DoLogging = false;
+
         private static void LogInternal(LogLevel level, string logMessage, Object context)
         {
+            if (!DoLogging)
+                return;
+            
             var logPrefix = $"<color=#{ColorUtility.ToHtmlStringRGBA(LoggingColor)}>Dora {level}</color>: ";
             var log = logPrefix + logMessage;
             switch (level)

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85af5ed6fc854c51a77a00e7b024accf, type: 3}
+  m_Name: LocationPath
+  m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Requirements.LocationPathStep
+  <SkipValidation>k__BackingField: 0
+  <IsHidden>k__BackingField: 0
+  <IsCompleted>k__BackingField: 0
+  spaceFoundationData: {fileID: 11400000, guid: 9afc728de9ca0468da27ddcc18b149fa,
+    type: 2}
+  path:
+  - a1
+  - a0
+  hasMaxDistance: 0
+  maxDistance: 0

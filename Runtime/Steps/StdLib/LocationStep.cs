@@ -13,12 +13,8 @@ namespace giorgiokalmund.Dora.Steps.StdLib
     public class LocationStep : QuestStep
     {
         [SerializeField] protected SpaceFoundationData spaceFoundationData;
-        private bool HasData => spaceFoundationData != null;
         
-        [Dropdown(nameof(AvailableAnchors))]
-        [ShowIf(nameof(HasData))]
         [SerializeField] protected string anchorID;
-        internal string[] AvailableAnchors => spaceFoundationData?.anchors.entries.Select(e => e.Key).ToArray() ?? new string[]{};
 
         protected override QuestValidationInformation HandleValidation()
         {

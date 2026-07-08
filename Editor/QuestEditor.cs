@@ -66,7 +66,7 @@ namespace giorgiokalmund.Dora.Editor
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("DEBUG: Reset"))
                 {
-                    quest.Reset();
+                    quest.ResetQuest();
                 }
                 GUILayout.EndHorizontal();
 
