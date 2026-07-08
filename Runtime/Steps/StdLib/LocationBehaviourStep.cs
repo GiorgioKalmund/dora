@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using giorgiokalmund.Dora.Generation;
+using giorgiokalmund.Dora.Questing;
 using JetBrains.Annotations;
 using NaughtyAttributes;
 using SpaceFoundationSystem;
@@ -8,7 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace giorgiokalmund.Dora.Requirements
+namespace giorgiokalmund.Dora.Steps.StdLib
 {
     [System.Serializable] 
     public struct CountTracker
@@ -23,7 +24,7 @@ namespace giorgiokalmund.Dora.Requirements
         }
     }
     
-    [CreateAssetMenu(fileName = "LocationBehaviours", menuName = "Dora/Requirements/LocationBehaviours")]
+    [CreateAssetMenu(fileName = "LocationBehaviours", menuName = "Dora/Steps/LocationBehaviours")]
     public class LocationBehaviourStep : LocationStep, IPatternGenerator
     {
         [Header("Static Requirements")]

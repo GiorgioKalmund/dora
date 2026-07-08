@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace giorgiokalmund.Dora
+namespace giorgiokalmund.Dora.Questing
 {
     /// <summary>
     /// State of a quest. Only moves forward unless quest is reset or similar.

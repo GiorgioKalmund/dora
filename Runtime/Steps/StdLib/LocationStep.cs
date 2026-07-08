@@ -1,12 +1,16 @@
+using System;
 using System.Linq;
+using giorgiokalmund.Dora.Questing;
+using giorgiokalmund.Dora.Questing.Events;
 using NaughtyAttributes;
+using NUnit.Framework;
 using SpaceFoundationSystem;
 using UnityEngine;
 
-namespace giorgiokalmund.Dora.Requirements
+namespace giorgiokalmund.Dora.Steps.StdLib
 {
-    [CreateAssetMenu(fileName = "Location", menuName = "Dora/Requirements/Location")]
-    public class LocationStep : QuestStep, IDonator<string>
+    [CreateAssetMenu(fileName = "Location", menuName = "Dora/Steps/Location")]
+    public class LocationStep : QuestStep
     {
         [SerializeField] protected SpaceFoundationData spaceFoundationData;
         private bool HasData => spaceFoundationData != null;
@@ -14,7 +18,7 @@ namespace giorgiokalmund.Dora.Requirements
         [Dropdown(nameof(AvailableAnchors))]
         [ShowIf(nameof(HasData))]
         [SerializeField] protected string anchorID;
-        private string[] AvailableAnchors => spaceFoundationData?.anchors.entries.Select(e => e.Key).ToArray() ?? new string[]{};
+        internal string[] AvailableAnchors => spaceFoundationData?.anchors.entries.Select(e => e.Key).ToArray() ?? new string[]{};
 
         protected override QuestValidationInformation HandleValidation()
         {
@@ -30,19 +34,16 @@ namespace giorgiokalmund.Dora.Requirements
             return $"Visit {SpaceFoundation.Current.GetAnchorName(anchorID)}";
         }
 
-        public bool Receive(string receivedAnchorID)
+        protected override bool CanProcess(IGameplayEvent e) => e is EnteredLocationEvent;
+
+        protected override void ProcessEvent(IGameplayEvent e)
         {
-            if (receivedAnchorID.Equals(anchorID))
+            Assert.IsTrue(e is EnteredLocationEvent, $"LocationStep is processing invalid event type: {e.GetType()}");
+            EnteredLocationEvent entered = (EnteredLocationEvent)e;
+            if (entered.Location.Equals(anchorID))
             {
                 Complete();
-                return true;
             }
-            return false;
-        }
-
-        public bool Steal(string donation)
-        {
-            return false;
         }
     }
 }

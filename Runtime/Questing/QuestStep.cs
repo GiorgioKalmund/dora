@@ -1,18 +1,16 @@
 using System;
+using giorgiokalmund.Dora.Questing.Events;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace giorgiokalmund.Dora
+namespace giorgiokalmund.Dora.Questing
 {
     [Serializable]
-    public abstract class QuestStep : ScriptableObject
+    public abstract class QuestStep : ScriptableObject 
     {
         [field: SerializeField, Tooltip("Whether to automatically validate the requirements in the editor.")]
         public bool SkipValidation { get; protected set; }
-        
-        [field: SerializeField, Tooltip("Whether this requirement should be hidden from the player / user. Some events might not fire if this is set to true.")]
-        public bool IsHidden { get; protected set; }
         
         [field: SerializeField, Tooltip("Whether this requirement should be hidden from the player / user. Some events might not fire if this is set to true.")]
         public bool IsCompleted { get; protected set; }
@@ -37,6 +35,14 @@ namespace giorgiokalmund.Dora
             return QuestValidationInformation.Success();
         }
 
+        protected bool TryComplete()
+        {
+            bool result = CanBeCompleted;
+            if (result)
+                Complete();
+            return result;
+        }
+
         protected void Complete()
         {
             if (IsCompleted)
@@ -44,6 +50,7 @@ namespace giorgiokalmund.Dora
                 DoraLogger.LogWarning($"Cannot complete quest step {ToString()}. Already completed");
                 return;
             }
+            
             IsCompleted = true;
             OnComplete.Invoke();
         }
@@ -56,21 +63,40 @@ namespace giorgiokalmund.Dora
         public void Reset()
         {
             SkipValidation = false;
-            IsHidden = false;
             IsCompleted = false;
-            ResetRequirements();
+            OnReset();
         }
 
+        // TODO: Maybe differentiate between editor description and gameplay description?
         public abstract string GetDescription();
 
         protected virtual bool CheckCompletion() { return true; }
 
+        internal void Process(IGameplayEvent e)
+        {
+            if (CanProcess(e))
+                ProcessEvent(e);
+        }
+
+        protected abstract bool CanProcess(IGameplayEvent e);
+        protected abstract void ProcessEvent(IGameplayEvent e);
+
         /// <summary>
         /// Resets the quest requirement to its starting state. All variables which track progress should be reset.
         /// </summary>
-        public virtual void ResetRequirements()
+        public virtual void OnReset()
         {
-            
+            // Intentionally left blank
+        }
+
+        public virtual void OnQuestManagerInit()
+        {
+            // Intentionally left blank
+        }
+
+        public virtual void OnQuestManagerDeinit()
+        {
+            // Intentionally left blank
         }
     }
 }

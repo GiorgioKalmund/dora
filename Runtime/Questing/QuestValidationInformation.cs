@@ -1,6 +1,4 @@
-using System;
-
-namespace giorgiokalmund.Dora
+namespace giorgiokalmund.Dora.Questing
 {
     public abstract class QuestValidationInformation
     {

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 
-namespace giorgiokalmund.Dora
+namespace giorgiokalmund.Dora.Questing
 {
     /// <summary>
     /// Cheks and verified the viability of quests. This is done via <see cref="QuestConstraint"/>s.

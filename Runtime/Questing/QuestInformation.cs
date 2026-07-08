@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace giorgiokalmund.Dora
+namespace giorgiokalmund.Dora.Questing
 {
     [Serializable]
     public class QuestInformation : IEquatable<QuestInformation>, IComparable<QuestInformation>

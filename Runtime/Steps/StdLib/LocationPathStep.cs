@@ -1,12 +1,15 @@
+using System;
 using System.Text;
+using giorgiokalmund.Dora.Questing;
+using giorgiokalmund.Dora.Questing.Events;
 using NaughtyAttributes;
 using SpaceFoundationSystem;
 using UnityEngine;
 
-namespace giorgiokalmund.Dora.Requirements
+namespace giorgiokalmund.Dora.Steps.StdLib
 {
     [CreateAssetMenu(fileName = "LocationPath", menuName = "Dora/Steps/LocationPath")]
-    public class LocationPathStep : QuestStep, IDonator<string>
+    public class LocationPathStep : QuestStep
     {
         [SerializeField] protected SpaceFoundationData spaceFoundationData;
         // TODO: Maybe only show options of valid strings here, similar to regular LocationStep / validate on the fly
@@ -66,7 +69,7 @@ namespace giorgiokalmund.Dora.Requirements
                 ? $"Visit {SpaceFoundation.Current.GetAnchorName(CurrentPathID)}" 
                 : PathDescription;
         }
-        
+
         private string PathDescription {
             get
             {
@@ -81,27 +84,22 @@ namespace giorgiokalmund.Dora.Requirements
             }
         }
 
-        public bool Receive(string receivedAnchorID)
+        protected override bool CanProcess(IGameplayEvent e) => e is EnteredLocationEvent;
+
+        protected override void ProcessEvent(IGameplayEvent e)
         {
-            if (receivedAnchorID.Equals(CurrentPathID))
+            EnteredLocationEvent entered = (EnteredLocationEvent)e;
+            if (entered.Location.Equals(CurrentPathID))
             {
                 pathIndex++;
                 if (pathIndex == path.Length) 
                     Complete();
                 else
                     Update();
-                return true;
             }
-            
-            return false;
         }
 
-        public bool Steal(string donation)
-        {
-            return false;
-        }
-
-        public override void ResetRequirements()
+        public override void OnReset()
         {
             pathIndex = 0;
             accumulatedDistance = 0;

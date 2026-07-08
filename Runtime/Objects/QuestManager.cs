@@ -1,6 +1,6 @@
-using System.Collections.Generic;
 using System.Linq;
-using giorgiokalmund.Dora.Requirements;
+using giorgiokalmund.Dora.Questing;
+using giorgiokalmund.Dora.Questing.Events;
 using giorgiokalmund.Dora.Utils;
 using SpaceFoundationSystem;
 using UnityEngine;
@@ -17,19 +17,13 @@ namespace giorgiokalmund.Dora
         
         public UnityEvent<Quest, QuestState> onQuestStateChanged;
 
+        private GameplayEventBus _eventBus;
+        public static GameplayEventBus EventBus => Current?._eventBus;
+
         private LocationMember _mainActor;
         
         [SerializeField] public Quest[] all;
         
-        #region Filtered Quests
-        private Quest[] Unknown => all?.Where(q => q.State == QuestState.UNKNOWN).ToArray();
-        private Quest[] Mentioned => all?.Where(q => q.State == QuestState.MENTIONED).ToArray();
-        private Quest[] Accepted => all?.Where(q => q.State == QuestState.ACCEPTED).ToArray();
-        private Quest[] Achieved => all?.Where(q => q.State == QuestState.ACHIEVED).ToArray();
-        private Quest[] Completed => all?.Where(q => q.State == QuestState.COMPLETED).ToArray();
-        #endregion
-
-
         protected void Awake()
         {
             if (Current)
@@ -37,6 +31,8 @@ namespace giorgiokalmund.Dora
                 DoraLogger.LogError("There is already a quest manager registered in the scene.", this);
                 return;
             }
+            
+            _eventBus = new GameplayEventBus();
             Current = this;
         }
         
@@ -48,7 +44,13 @@ namespace giorgiokalmund.Dora
                 quest?.AddTo(this);
             
             foreach (var quest in all)
-                quest.InitForScene();
+                quest.OnQuestManagerInit();
+        }
+
+        private void OnDestroy()
+        {
+            foreach (var quest in all)
+                quest.OnQuestManagerDeinit();
         }
 
         public void RegisterMainActor(LocationMember locationMember)
@@ -69,33 +71,41 @@ namespace giorgiokalmund.Dora
 
         private void HandleMainActorLocationChanged(Anchor newLocation)
         {
-            PropagateLocationToMainActorLocationSteps(newLocation);
-        }
-
-        private void PropagateLocationToMainActorLocationSteps(Anchor newLocation)
-        {
-            // TODO: Very Bad
-            var currentLocations = Accepted.Select(s => s.CurrentStep).Where(r => r is LocationStep || r is LocationPathStep);
-
-            foreach (var req in currentLocations)
-            {
-                if (req is IDonator<string> donator)
-                    donator.Receive(newLocation.GetUniqueId());
-            }
+            _eventBus.Publish(new EnteredLocationEvent(newLocation));
         }
 
         public bool MentionQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.MENTIONED);
 
         public bool StartQuest(Quest quest)
         {
-            // TODO: Maybe boolean which checks if we should auto check the location etc on quest start / step start...
             var success = SetQuestStateInternal(quest, QuestState.ACCEPTED);
-            if (success)
-                PropagateLocationToMainActorLocationSteps(_mainActor.currentLocation);
+            if (!success)
+                return false;
             
-            return success;
+            Register(quest);
+            // TODO: Maybe boolean which checks if we should auto check the location etc on quest start / step start...
+            HandleMainActorLocationChanged(_mainActor.currentLocation);
+            return true;
+        }
+
+        public bool CompleteQuest(Quest quest)
+        {
+            var success = SetQuestStateInternal(quest, QuestState.COMPLETED);
+            if (!success)
+                return false;
+
+            return true;
         } 
-        public bool CompleteQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.COMPLETED);
+        
+        public bool BotchQuest(Quest quest)
+        {
+            var success = BotchQuestInternal(quest);
+            if (!success)
+                return false;
+
+            return true;
+        }
+
         public bool AdvanceQuest(Quest quest) => AdvanceQuestStateInternal(quest);
 
         private bool AdvanceQuestStateInternal(Quest quest)
@@ -106,6 +116,13 @@ namespace giorgiokalmund.Dora
                 return false;
             }
 
+            // Explicitly handle start flow
+            if (quest.State == QuestState.MENTIONED)
+                return StartQuest(quest);
+            
+            if (quest.State == QuestState.ACHIEVED)
+                return CompleteQuest(quest);
+            
             return quest.TryAdvanceState(out _);
         }
 
@@ -121,6 +138,32 @@ namespace giorgiokalmund.Dora
             return quest.TrySetState(state);
         }
         
+        private bool BotchQuestInternal(Quest quest)
+        {
+            if (!all.Contains(quest))
+            {
+                DoraLogger.LogError($"Cannot botch {quest.Information}. Not tracked by this QuestManager.", this);
+                return false;
+            }
+
+            Unregister(quest);
+            return quest.Botch();
+        }
+        
+        
+        private void Register(Quest quest)
+        {
+            // TODO: Instead of listening to all, maybe filter out quest first or something or make the 
+            _eventBus.OnPublished.AddListener(quest.Process);
+            quest.onComplete.AddListener(Unregister);
+        }
+
+        private void Unregister(Quest quest)
+        {
+            quest.onComplete.RemoveListener(Unregister);
+            _eventBus.OnPublished.RemoveListener(quest.Process);
+        }
+
         public void AddComponent<T>(BaseComponent<T> component) where T : IComponentOwner
         {
             var quest = component as Quest;

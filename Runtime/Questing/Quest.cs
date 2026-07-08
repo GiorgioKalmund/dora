@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using giorgiokalmund.Dora.Questing.Events;
 using giorgiokalmund.Dora.Utils;
 using JetBrains.Annotations;
 using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace giorgiokalmund.Dora
+namespace giorgiokalmund.Dora.Questing
 {
     [CreateAssetMenu(fileName = "Quest", menuName = "Dora/Quest", order = 1)]
     public class Quest :  BaseComponent<QuestManager>, IEquatable<Quest>, IComparable<Quest>
@@ -16,9 +17,6 @@ namespace giorgiokalmund.Dora
         [field: SerializeField, Tooltip("Cannot be recovered or completed. Can be set during every state except if already <see cref=\"QuestState.COMPLETED\"/>.")]
         public bool IsBotched { get; protected set; }
         
-        [field: SerializeField, Tooltip("Whether this quest is invisible to the player. Certain events might not fire if set to true.")]
-        public bool IsHidden { get; protected set; }
-
         [field: SerializeField, Tooltip("The state of the quest. Can only move forward. (Unless restarted / reset)")]
         [field: ReadOnly]
         public QuestState State { get; private set; }
@@ -50,6 +48,7 @@ namespace giorgiokalmund.Dora
         public UnityEvent<QuestStep> onStepStarted = new ();
         public UnityEvent<QuestStep> onStepUpdated = new ();
         public UnityEvent<QuestStep> onStepCompleted = new ();
+        public UnityEvent<Quest> onComplete = new();
         
         [CanBeNull]
         public QuestStep CurrentStep
@@ -74,10 +73,9 @@ namespace giorgiokalmund.Dora
             Manager?.onQuestStateChanged.Invoke(this, State);
             currentStepIdx = 0;
             IsBotched = false;
-            IsHidden = false;
             foreach (var questStep in Steps)
                 questStep.Reset();
-        } 
+        }
 
         #region Validation
 
@@ -141,11 +139,6 @@ namespace giorgiokalmund.Dora
 
         #endregion
 
-        internal void InitForScene()
-        {
-            
-        }
-        
         [CanBeNull]
         protected QuestStep NextStep()
         {
@@ -259,13 +252,16 @@ namespace giorgiokalmund.Dora
 
             if (State == QuestState.ACHIEVED && Rewards == null)
                 return TryAdvanceState(out _);
-            
+
             if (State == QuestState.COMPLETED)
+            {
+                onComplete.Invoke(this);
                 HandOutRewards();
+            }
             return true;
         }
 
-        public bool Botch()
+        internal bool Botch()
         {
             if (IsBotchedOrCompleted)
                 return false;
@@ -305,6 +301,15 @@ namespace giorgiokalmund.Dora
             return false;
         }
 
+        #region Events
+
+        internal void Process(IGameplayEvent e)
+        {
+            CurrentStep?.Process(e);
+        }
+
+        #endregion
+
         #region IEquatable - based on QuestInformation
 
         public bool Equals(Quest other)
@@ -339,5 +344,17 @@ namespace giorgiokalmund.Dora
         }
 
         #endregion
+
+        public virtual void OnQuestManagerInit()
+        {
+            foreach (var questStep in Steps)
+                questStep.OnQuestManagerInit();
+        }
+
+        public virtual void OnQuestManagerDeinit()
+        {
+            foreach (var questStep in Steps)
+                questStep.OnQuestManagerDeinit();
+        }
     }
 }
