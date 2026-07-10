@@ -86,15 +86,18 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         protected override bool CanProcess(IGameplayEvent e) => e is EnteredLocationEvent;
 
+        protected override bool CheckCompletion()
+        {
+            return pathIndex == path.Length;
+        }
+
         protected override void ProcessEvent(IGameplayEvent e)
         {
             EnteredLocationEvent entered = (EnteredLocationEvent)e;
             if (entered.Location.Equals(CurrentPathID))
             {
                 pathIndex++;
-                if (pathIndex == path.Length) 
-                    Complete();
-                else
+                if (!TryComplete())
                     Update();
             }
         }

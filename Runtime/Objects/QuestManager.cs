@@ -97,15 +97,6 @@ namespace giorgiokalmund.Dora
             return true;
         } 
         
-        public bool BotchQuest(Quest quest)
-        {
-            var success = BotchQuestInternal(quest);
-            if (!success)
-                return false;
-
-            return true;
-        }
-
         public bool AdvanceQuest(Quest quest) => AdvanceQuestStateInternal(quest);
 
         private bool AdvanceQuestStateInternal(Quest quest)
@@ -126,7 +117,6 @@ namespace giorgiokalmund.Dora
             return quest.TryAdvanceState(out _);
         }
 
-
         private bool SetQuestStateInternal(Quest quest, QuestState state)
         {
             if (!all.Contains(quest))
@@ -138,7 +128,7 @@ namespace giorgiokalmund.Dora
             return quest.TrySetState(state);
         }
         
-        private bool BotchQuestInternal(Quest quest)
+        public bool BotchQuest(Quest quest)
         {
             if (!all.Contains(quest))
             {
@@ -146,16 +136,26 @@ namespace giorgiokalmund.Dora
                 return false;
             }
 
-            Unregister(quest);
             return quest.Botch();
         }
-        
+
+        public void ResetQuest(Quest quest)
+        {
+            if (!all.Contains(quest))
+            {
+                DoraLogger.LogError($"Cannot reset {quest.Information}. Not tracked by this QuestManager.", this);
+                return ;
+            }
+
+            quest.ResetQuest();
+        }
         
         private void Register(Quest quest)
         {
             // TODO: Instead of listening to all, maybe filter out quest first or something or make the 
             _eventBus.OnPublished.AddListener(quest.Process);
             quest.onComplete.AddListener(Unregister);
+            quest.onBotch.AddListener(Unregister);
         }
 
         private void Unregister(Quest quest)

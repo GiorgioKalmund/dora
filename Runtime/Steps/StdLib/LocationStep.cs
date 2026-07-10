@@ -38,7 +38,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
             EnteredLocationEvent entered = (EnteredLocationEvent)e;
             if (entered.Location.Equals(anchorID))
             {
-                Complete();
+                TryComplete();
             }
         }
     }

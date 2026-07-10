@@ -50,6 +50,7 @@ namespace giorgiokalmund.Dora.Questing
         public UnityEvent<QuestStep> onStepUpdated = new ();
         public UnityEvent<QuestStep> onStepCompleted = new ();
         public UnityEvent<Quest> onComplete = new();
+        public UnityEvent<Quest> onBotch = new();
         
         [CanBeNull]
         public QuestStep CurrentStep
@@ -67,7 +68,7 @@ namespace giorgiokalmund.Dora.Questing
             Information.Title = name;
         }
         
-        public void ResetQuest()
+        internal void ResetQuest()
         {
             State = QuestState.UNKNOWN;
             onStateChanged.Invoke(State);
@@ -252,10 +253,8 @@ namespace giorgiokalmund.Dora.Questing
                 return TryAdvanceState(out _);
 
             if (State == QuestState.COMPLETED)
-            {
-                onComplete.Invoke(this);
-                HandOutRewards();
-            }
+                CompletedActions();
+            
             return true;
         }
 
@@ -278,10 +277,37 @@ namespace giorgiokalmund.Dora.Questing
         internal bool Botch()
         {
             if (IsBotchedOrCompleted)
+            {
+                DoraLogger.LogError($"Cannot botch quest {Information}. Already botched ({IsBotched}) or already completed ({IsCompleted})");
                 return false;
+            }
 
-            IsBotched = true;
+            BotchedActions();
             return true;
+        }
+
+        private void BotchedActions()
+        {
+            IsBotched = true;
+            onBotch.Invoke(this);
+        }
+
+        internal bool Complete()
+        {
+            if (IsBotchedOrCompleted)
+            {
+                DoraLogger.LogError($"Cannot complete quest {Information}. Already botched ({IsBotched}) or already completed ({IsCompleted})");
+                return false;
+            }
+            
+            CompletedActions();
+            return true;
+        }
+
+        private void CompletedActions()
+        {
+            onComplete.Invoke(this);
+            HandOutRewards();
         }
 
         private void HandleStepCompleted()
@@ -300,7 +326,7 @@ namespace giorgiokalmund.Dora.Questing
             Rewards?.HandOut();
         }
 
-        public bool CanBeAchieved()
+        private bool CanBeAchieved()
         {
             if (IsBotchedOrCompleted)
                 return false;
@@ -354,7 +380,7 @@ namespace giorgiokalmund.Dora.Questing
         {
             if (ReferenceEquals(this, other)) return 0;
             if (other is null) return 1;
-            return Comparer<QuestInformation>.Default.Compare(Information, other.Information);
+            return Information.CompareTo(other.Information);
         }
 
         #endregion

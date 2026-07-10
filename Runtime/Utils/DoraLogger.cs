@@ -7,7 +7,8 @@ namespace giorgiokalmund.Dora
     {
         private static readonly Color LoggingColor = Color.cyan;
 
-        public const bool DoLogging = false;
+        // Remove or add for demo purposes for example
+        public const bool DoLogging = true;
 
         private static void LogInternal(LogLevel level, string logMessage, Object context)
         {
