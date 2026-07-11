@@ -3975,10 +3975,12 @@ MonoBehaviour:
   autoUpdateDataEntries: 1
   data: {fileID: 11400000, guid: b5598d9ec1b2f40a4bc0d3aa8a6df525, type: 2}
   chunkMainData: {fileID: 0}
+  cacheRuntimePositions: 0
   voxelSize: 1
   chunkSize: 16
   maxLoadedChunks: 512
   maxChunkIterations: 50
+  maxAnchorSearchRaycastDistance: 1000
   delimitingLayerMask:
     serializedVersion: 2
     m_Bits: 64
@@ -10108,9 +10110,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1548230951}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85c4791146794931b10b974db7879582, type: 3}
+  m_Script: {fileID: 11500000, guid: 7cc9aad04b52a45c1a2fd5fd852c3fa2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GenericScripts.UserInterface.HUD
+  m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.HUD
   debugOptions: 0
   layoutElement: {fileID: 0}
   canvas: {fileID: 0}

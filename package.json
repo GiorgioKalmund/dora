@@ -3,11 +3,13 @@
   "version": "1.0.0",
   "displayName": "Dora",
   "description": "Exploration-based questing system with procedural generation and dynamic constraints.",
-  "unity": "6.0",
+  "unity": "6000.0",
   "author": {
     "name": "Giorgio Kalmund"
   },
   "dependencies": {
-    "com.unity.visualscripting" : "1.9.8"
+    "com.unity.visualscripting": "1.9.8",
+    "com.giorgiokalmund.ucgui": "1.0.26",
+    "dev.dyrda.space-foundation-system": "0.0.1"
   }
 }
