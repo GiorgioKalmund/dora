@@ -8,11 +8,11 @@ namespace giorgiokalmund.Dora
         private static readonly Color LoggingColor = Color.cyan;
 
         // Remove or add for demo purposes for example
-        public const bool DoLogging = true;
+        public static bool Enabled = true;
 
         private static void LogInternal(LogLevel level, string logMessage, Object context)
         {
-            if (!DoLogging)
+            if (!Enabled)
                 return;
             
             var logPrefix = $"<color=#{ColorUtility.ToHtmlStringRGBA(LoggingColor)}>Dora {level}</color>: ";

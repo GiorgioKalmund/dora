@@ -4880,7 +4880,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
-  id: a1
+  anchorId: a228339096
   maxAnchorDistance: 20
   color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
@@ -8725,8 +8725,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.SpaceFoundation
   assetName: SpaceFoundation-Sample-Scene
-  assetSaveType: 1
-  overrideExistingData: 0
+  assetSaveType: 0
+  overrideExistingData: 1
   autoUpdateDataEntries: 1
   data: {fileID: 11400000, guid: 46b97a7f337a94fd5be7f14c0bb3da15, type: 2}
   chunkMainData: {fileID: 0}
@@ -9011,7 +9011,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
-  id: a0
+  anchorId: a784517577
   maxAnchorDistance: 20
   color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
@@ -13169,7 +13169,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
-  id: a4
+  anchorId: a1041102406
   maxAnchorDistance: 20
   color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
@@ -23620,7 +23620,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
-  id: a3
+  anchorId: a1729043030
   maxAnchorDistance: 20
   color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
@@ -29302,7 +29302,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
-  id: a2
+  anchorId: a1978577960
   maxAnchorDistance: 20
   color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}

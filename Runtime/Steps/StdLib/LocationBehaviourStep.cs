@@ -62,7 +62,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                     {
                         locationMember.FindClosestAnchor();
                         if (locationMember.currentLocation 
-                            && locationMember.currentLocation.Equals(anchorID)  // Same location
+                            && locationMember.currentLocation.Equals(anchor)  // Same location
                             && PrefabUtility.GetCorrespondingObjectFromOriginalSource(locationMember.gameObject)) // Actual instance of prefab
                             containing.Add(locationMember);
                     }
@@ -73,19 +73,19 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                         case CountMode.MINIMUM:
                         {
                             if (objectCount < tracker.count)
-                                return QuestValidationInformation.Failure($"Not enough {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchorID)} ({anchorID}). Expected {tracker.count}, got {objectCount}.");
+                                return QuestValidationInformation.Failure($"Not enough {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                         case CountMode.EXACT:
                         {
                             if (objectCount != tracker.count)
-                                return QuestValidationInformation.Failure($"Not exact amount of {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchorID)} ({anchorID}). Expected {tracker.count}, got {objectCount}.");
+                                return QuestValidationInformation.Failure($"Not exact amount of {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                         case CountMode.MAXIMUM:
                         {
                             if (objectCount > tracker.count)
-                                return QuestValidationInformation.Failure($"Too many {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchorID)} ({anchorID}). Expected {tracker.count}, got {objectCount}.");
+                                return QuestValidationInformation.Failure($"Too many {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                     }
@@ -107,7 +107,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
                     // TODO: Slow!
                     var instances = FindObjectsByType(type).Where(o => o is MonoBehaviour).OfType<MonoBehaviour>().ToList();
-                    var containing = instances.Where(go => go.gameObject.transform.DetermineLocation().Equals(anchorID)).ToList();
+                    var containing = instances.Where(go => go.gameObject.transform.DetermineLocation().Equals(anchor)).ToList();
                     
                     int objectCount = containing.Count;
                     switch (tracker.mode)
@@ -115,19 +115,19 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                         case CountMode.MINIMUM:
                         {
                             if (objectCount < tracker.count)
-                                return QuestValidationInformation.Failure($"Not enough {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchorID)} ({anchorID}). Expected {tracker.count}, got {objectCount}.");
+                                return QuestValidationInformation.Failure($"Not enough {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                         case CountMode.EXACT:
                         {
                             if (objectCount != tracker.count)
-                                return QuestValidationInformation.Failure($"Not exact amount of {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchorID)} ({anchorID}). Expected {tracker.count}, got {objectCount}.");
+                                return QuestValidationInformation.Failure($"Not exact amount of {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                         case CountMode.MAXIMUM:
                         {
                             if (objectCount > tracker.count)
-                                return QuestValidationInformation.Failure($"Too many {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchorID)} ({anchorID}). Expected {tracker.count}, got {objectCount}.");
+                                return QuestValidationInformation.Failure($"Too many {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                     }

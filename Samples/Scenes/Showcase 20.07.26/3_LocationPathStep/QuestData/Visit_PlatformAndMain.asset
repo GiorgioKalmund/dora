@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Steps.StdLib.LocationPathStep
   <SkipValidation>k__BackingField: 0
   <IsCompleted>k__BackingField: 1
-  spaceFoundationData: {fileID: 11400000, guid: b5598d9ec1b2f40a4bc0d3aa8a6df525,
+  spaceFoundationData: {fileID: 11400000, guid: 9afc728de9ca0468da27ddcc18b149fa,
     type: 2}
   path:
   - a1

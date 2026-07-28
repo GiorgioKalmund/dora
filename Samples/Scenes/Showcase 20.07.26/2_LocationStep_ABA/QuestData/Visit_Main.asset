@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Steps.StdLib.LocationStep
   <SkipValidation>k__BackingField: 0
   <IsCompleted>k__BackingField: 0
-  spaceFoundationData: {fileID: 11400000, guid: b5598d9ec1b2f40a4bc0d3aa8a6df525,
+  spaceFoundationData: {fileID: 11400000, guid: 9afc728de9ca0468da27ddcc18b149fa,
     type: 2}
-  anchorID: a0
+  anchor: a1729043030

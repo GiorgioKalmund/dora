@@ -3648,7 +3648,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
-  id: a1
+  anchorId: a447280620
   maxAnchorDistance: 20
   color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
@@ -3890,10 +3890,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.SpaceFoundation
   assetName: SpaceFoundation-Sample-Scene
-  assetSaveType: 1
-  overrideExistingData: 0
+  assetSaveType: 0
+  overrideExistingData: 1
   autoUpdateDataEntries: 1
-  data: {fileID: 11400000, guid: b5598d9ec1b2f40a4bc0d3aa8a6df525, type: 2}
+  data: {fileID: 11400000, guid: 9afc728de9ca0468da27ddcc18b149fa, type: 2}
   chunkMainData: {fileID: 0}
   cacheRuntimePositions: 0
   voxelSize: 1
@@ -11851,7 +11851,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
-  id: a0
+  anchorId: a1729043030
   maxAnchorDistance: 20
   color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}

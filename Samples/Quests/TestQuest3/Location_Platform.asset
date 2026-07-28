@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Location_Platform
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Requirements.LocationRequirement
   <SkipValidation>k__BackingField: 0
-  <IsHidden>k__BackingField: 0
   <IsCompleted>k__BackingField: 1
   spaceFoundationData: {fileID: 11400000, guid: 9afc728de9ca0468da27ddcc18b149fa,
     type: 2}
   anchorID: a0
+  dropdownAnchorID: a65728

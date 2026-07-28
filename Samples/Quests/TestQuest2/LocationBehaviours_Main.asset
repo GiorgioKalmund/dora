@@ -13,11 +13,10 @@ MonoBehaviour:
   m_Name: LocationBehaviours_Main
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Requirements.LocationBehaviourStep
   <SkipValidation>k__BackingField: 0
-  <IsHidden>k__BackingField: 0
   <IsCompleted>k__BackingField: 0
   spaceFoundationData: {fileID: 11400000, guid: 9afc728de9ca0468da27ddcc18b149fa,
     type: 2}
-  anchorID: a1
+  anchor: a1729043030
   requiredObjects:
     entries:
     - Key: {fileID: 7648018101681665706, guid: 03f47106d4209bd41ba48cf780016652, type: 3}

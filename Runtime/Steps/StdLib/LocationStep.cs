@@ -1,5 +1,4 @@
-using System;
-using System.Linq;
+using giorgiokalmund.Dora.Editor;
 using giorgiokalmund.Dora.Questing;
 using giorgiokalmund.Dora.Questing.Events;
 using NaughtyAttributes;
@@ -13,21 +12,23 @@ namespace giorgiokalmund.Dora.Steps.StdLib
     public class LocationStep : QuestStep
     {
         [SerializeField] protected SpaceFoundationData spaceFoundationData;
+        private bool HasSfsData => spaceFoundationData != null;
         
-        [SerializeField] protected string anchorID;
+        [SerializeField, Location(nameof(spaceFoundationData)), ShowIf(nameof(HasSfsData))]
+        protected string anchor;
 
         protected override QuestValidationInformation HandleValidation()
         {
             if (!spaceFoundationData)
                 return QuestValidationInformation.Failure("No SpaceFoundation Data!");
-            if (!spaceFoundationData.anchors.Contains(anchorID))
-                return QuestValidationInformation.Failure($"The anchorID '{anchorID}' is not part of the provided SpaceFoundationData {spaceFoundationData.name}");
+            if (!spaceFoundationData.anchors.Contains(anchor))
+                return QuestValidationInformation.Failure($"The anchorID '{anchor}' is not part of the provided SpaceFoundationData {spaceFoundationData.name}");
             return QuestValidationInformation.Success();
         }
 
         public override string GetDescription()
         {
-            return $"Visit {SpaceFoundation.Current.GetAnchorName(anchorID)}";
+            return $"Visit {SpaceFoundation.Current.GetAnchorName(anchor)}";
         }
 
         protected override bool CanProcess(IGameplayEvent e) => e is EnteredLocationEvent;
@@ -36,7 +37,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         {
             Assert.IsTrue(e is EnteredLocationEvent, $"LocationStep is processing invalid event type: {e.GetType()}");
             EnteredLocationEvent entered = (EnteredLocationEvent)e;
-            if (entered.Location.Equals(anchorID))
+            if (entered.Location.Equals(anchor))
             {
                 TryComplete();
             }
