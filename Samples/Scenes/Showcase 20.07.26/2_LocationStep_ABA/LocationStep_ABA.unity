@@ -3612,7 +3612,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 447280619}
-  - component: {fileID: 447280621}
   - component: {fileID: 447280620}
   m_Layer: 0
   m_Name: Platform
@@ -3648,23 +3647,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
+  autoAnchorId: 1
   anchorId: a447280620
   maxAnchorDistance: 20
-  color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
---- !u!114 &447280621
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 447280618}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 621cc62014ff4272b79315a17ba06e95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.GUIDComponent
-  guid: 3c86ee0e-60de-44b9-81e7-1832dab4328b
 --- !u!43 &679432864
 Mesh:
   m_ObjectHideFlags: 0
@@ -11815,7 +11801,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1729043029}
-  - component: {fileID: 1729043031}
   - component: {fileID: 1729043030}
   m_Layer: 0
   m_Name: Main
@@ -11851,23 +11836,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
+  autoAnchorId: 1
   anchorId: a1729043030
   maxAnchorDistance: 20
-  color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
---- !u!114 &1729043031
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1729043028}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 621cc62014ff4272b79315a17ba06e95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.GUIDComponent
-  guid: 3c86ee0e-60de-44b9-81e7-1832dab4328b
 --- !u!1 &1735233584
 GameObject:
   m_ObjectHideFlags: 0

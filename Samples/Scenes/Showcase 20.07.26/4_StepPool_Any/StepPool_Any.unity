@@ -5099,7 +5099,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 228339095}
-  - component: {fileID: 228339097}
   - component: {fileID: 228339096}
   m_Layer: 0
   m_Name: Option3
@@ -5135,23 +5134,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
+  autoAnchorId: 1
   anchorId: a228339096
   maxAnchorDistance: 20
-  color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
---- !u!114 &228339097
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 228339094}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 621cc62014ff4272b79315a17ba06e95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.GUIDComponent
-  guid: 3c86ee0e-60de-44b9-81e7-1832dab4328b
 --- !u!1 &229900859
 GameObject:
   m_ObjectHideFlags: 0
@@ -9177,7 +9163,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 784517576}
-  - component: {fileID: 784517578}
   - component: {fileID: 784517577}
   m_Layer: 0
   m_Name: Option4
@@ -9213,23 +9198,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
+  autoAnchorId: 1
   anchorId: a784517577
   maxAnchorDistance: 20
-  color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
---- !u!114 &784517578
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 784517575}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 621cc62014ff4272b79315a17ba06e95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.GUIDComponent
-  guid: 3c86ee0e-60de-44b9-81e7-1832dab4328b
 --- !u!43 &790266354
 Mesh:
   m_ObjectHideFlags: 0
@@ -13489,7 +13461,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1041102405}
-  - component: {fileID: 1041102407}
   - component: {fileID: 1041102406}
   m_Layer: 0
   m_Name: Option2
@@ -13525,23 +13496,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
+  autoAnchorId: 1
   anchorId: a1041102406
   maxAnchorDistance: 20
-  color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
---- !u!114 &1041102407
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1041102404}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 621cc62014ff4272b79315a17ba06e95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.GUIDComponent
-  guid: 3c86ee0e-60de-44b9-81e7-1832dab4328b
 --- !u!1 &1060613062
 GameObject:
   m_ObjectHideFlags: 0
@@ -24118,7 +24076,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1729043029}
-  - component: {fileID: 1729043031}
   - component: {fileID: 1729043030}
   m_Layer: 0
   m_Name: Main
@@ -24154,23 +24111,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
+  autoAnchorId: 1
   anchorId: a1729043030
   maxAnchorDistance: 20
-  color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
---- !u!114 &1729043031
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1729043028}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 621cc62014ff4272b79315a17ba06e95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.GUIDComponent
-  guid: 3c86ee0e-60de-44b9-81e7-1832dab4328b
 --- !u!1 &1735233584
 GameObject:
   m_ObjectHideFlags: 0
@@ -29622,7 +29566,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1978577959}
-  - component: {fileID: 1978577961}
   - component: {fileID: 1978577960}
   m_Layer: 0
   m_Name: Option1
@@ -29658,23 +29601,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383cfd5cf3d84335b3022d3531f57e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.Anchor
+  autoAnchorId: 1
   anchorId: a1978577960
   maxAnchorDistance: 20
-  color: {r: 0, g: 1, b: 1, a: 0.6}
   correspondingSpaceFoundation: {fileID: 679698981}
---- !u!114 &1978577961
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1978577958}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 621cc62014ff4272b79315a17ba06e95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DyrdaDev.SpaceFoundationSystemForUnity.Runtime::SpaceFoundationSystem.GUIDComponent
-  guid: 3c86ee0e-60de-44b9-81e7-1832dab4328b
 --- !u!43 &1989445816
 Mesh:
   m_ObjectHideFlags: 0
