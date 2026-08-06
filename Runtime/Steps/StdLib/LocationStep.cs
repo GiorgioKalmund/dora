@@ -21,7 +21,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         {
             if (!spaceFoundationData)
                 return QuestValidationInformation.Failure("No SpaceFoundation Data!");
-            if (!spaceFoundationData.anchors.Contains(anchor))
+            if (!spaceFoundationData.TryGetAnchorSoAIndex(anchor, out _))
                 return QuestValidationInformation.Failure($"The anchorID '{anchor}' is not part of the provided SpaceFoundationData {spaceFoundationData.name}");
             return QuestValidationInformation.Success();
         }

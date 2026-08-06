@@ -17,8 +17,8 @@ MonoBehaviour:
   spaceFoundationData: {fileID: 11400000, guid: 9afc728de9ca0468da27ddcc18b149fa,
     type: 2}
   path:
-  - a1
-  - a0
+  - a447280620
+  - a1729043030
   hasMaxDistance: 0
   maxDistance: 0
   pathIndex: 2

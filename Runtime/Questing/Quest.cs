@@ -142,6 +142,7 @@ namespace giorgiokalmund.Dora.Questing
 
         #endregion
 
+        // TODO: Maybe have return bool as well and then out QuestStep?
         [CanBeNull]
         protected QuestStep NextStep()
         {
@@ -170,7 +171,19 @@ namespace giorgiokalmund.Dora.Questing
             }
 
             if (CurrentStep != null)
+            {
+                if (!CurrentStep.IsCompleted)
+                {
+                    // In out-of-the-box experience of Dora this should never be invoked as NextStep is ONLY
+                    // ever invoked when the current step has completed and fired its completion event.
+                    // However, overrides of this method or control flow changes through inheritance of this class
+                    // might change this restricted calling and thus a separate check is required.
+                    DoraLogger.LogWarning("Cannot move onto next step. Current step has not been completed yet.");
+                    return null;
+                }
+                
                 StepCompletedActions();
+            }
             
             currentStepIdx++;
             
@@ -180,18 +193,26 @@ namespace giorgiokalmund.Dora.Questing
             return CurrentStep;
         }
 
+        /// <returns></returns>
         /// <summary>
         /// Advances the state based on the restricted flow of the state logic.
         /// </summary>
-        /// <param name="newState"></param>
-        /// <returns></returns>
+        /// <returns>Whether the operation was successful.</returns>
+        internal bool TryAdvanceState() => TryAdvanceState(out _);
+        
+        /// <summary>
+        /// Advances the state based on the restricted flow of the state logic.
+        /// </summary>
+        /// <param name="newState">The new <see cref="QuestState"/> after a successful operation.</param>
+        /// <returns>Whether the operation was successful.</returns>
         internal bool TryAdvanceState(out QuestState newState)
         {
             newState = State;
 
-            if (State < QuestState.ACCEPTED && (BaseStep && BaseStep.Validate().IsFailure))
+            // State < QuestState.ACCEPTED ?
+            if (State == QuestState.MENTIONED && (BaseStep && BaseStep.IsCompleted))
             {
-                DoraLogger.LogWarning("cannot advance state. not accepted or base not met");
+                DoraLogger.LogWarning($"Cannot advance quest state {Information}. BaseStep is not completed yet.");
                 return false;
             }
 
@@ -290,18 +311,6 @@ namespace giorgiokalmund.Dora.Questing
         {
             IsBotched = true;
             onBotch.Invoke(this);
-        }
-
-        internal bool Complete()
-        {
-            if (IsBotchedOrCompleted)
-            {
-                DoraLogger.LogError($"Cannot complete quest {Information}. Already botched ({IsBotched}) or already completed ({IsCompleted})");
-                return false;
-            }
-            
-            CompletedActions();
-            return true;
         }
 
         private void CompletedActions()

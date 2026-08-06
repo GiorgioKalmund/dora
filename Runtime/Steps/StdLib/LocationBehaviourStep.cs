@@ -27,6 +27,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
     [CreateAssetMenu(fileName = "LocationBehaviours", menuName = "Dora/Steps/LocationBehaviours")]
     public class LocationBehaviourStep : LocationStep, IPatternGenerator
     {
+        // TODO: @Refactor regular dictionary when Unity 6.7 releases?
         [Header("Static Requirements")]
         [SerializeField] protected SerializableDictionary<GameObject, CountTracker> requiredObjects;
         [SerializeField] protected SerializableDictionary<MonoScript, CountTracker> requiredBehaviours;
@@ -35,6 +36,8 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         [Expandable]
         [SerializeField] [CanBeNull] protected GenerationPattern generationPattern;
 
+        
+        // TODO
         /*
         public override string GetDescription()
         {

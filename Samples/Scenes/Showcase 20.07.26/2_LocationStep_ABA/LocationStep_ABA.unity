@@ -3879,7 +3879,7 @@ MonoBehaviour:
   assetSaveType: 0
   overrideExistingData: 1
   autoUpdateDataEntries: 1
-  data: {fileID: 11400000, guid: 9afc728de9ca0468da27ddcc18b149fa, type: 2}
+  data: {fileID: 11400000, guid: f4ac6ee941f374325ac7bf3e10811889, type: 2}
   chunkMainData: {fileID: 0}
   cacheRuntimePositions: 0
   voxelSize: 1
@@ -5107,6 +5107,7 @@ MonoBehaviour:
   onQuestStateChanged:
     m_PersistentCalls:
       m_Calls: []
+  makeSingleton: 1
   all:
   - {fileID: 11400000, guid: b9b7624ff10f74535a63d48f01da1d75, type: 2}
 --- !u!1 &1004768193

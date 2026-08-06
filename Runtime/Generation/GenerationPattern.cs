@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace giorgiokalmund.Dora.Generation
 {
+    // TODO: test + iterate + document!
     public abstract class GenerationPattern : ScriptableObject
     {
         protected bool ShouldClearOnGenerate = true;

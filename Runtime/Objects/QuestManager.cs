@@ -13,27 +13,46 @@ namespace giorgiokalmund.Dora
     /// </summary>
     public class QuestManager : MonoBehaviour, IComponentOwner
     {
+        [Header("Events")]
+        public UnityEvent<Quest, QuestState> onQuestStateChanged = new UnityEvent<Quest, QuestState>();
+        
+        [Header("Singleton")]
+        [SerializeField, Tooltip("Whether to initialize the QuestManager using the Singleton pattern.")]
+        private bool makeSingleton = true;
         public static QuestManager Current { get; private set; }
         
-        public UnityEvent<Quest, QuestState> onQuestStateChanged = new UnityEvent<Quest, QuestState>();
+        [Header("Quests")]
+        [SerializeField] public Quest[] all;
+
+        #region EventBus
 
         private GameplayEventBus _eventBus;
         public static GameplayEventBus EventBus => Current?._eventBus;
 
+        #endregion
+
+        #region MainActor
+
         private LocationMember _mainActor;
+
+        #endregion
         
-        [SerializeField] public Quest[] all;
         
         protected void Awake()
         {
-            if (Current)
+            if (makeSingleton)
             {
-                DoraLogger.LogError("There is already a quest manager registered in the scene.", this);
-                return;
+                if (Current)
+                {
+                    DoraLogger.LogError("There is already a quest manager registered in the scene.", this);
+                    Destroy(gameObject);
+                    return;
+                } 
+                
+                Current = this;
             }
             
             _eventBus = new GameplayEventBus();
-            Current = this;
         }
         
         private void Start()
@@ -93,7 +112,7 @@ namespace giorgiokalmund.Dora
             var success = SetQuestStateInternal(quest, QuestState.COMPLETED);
             if (!success)
                 return false;
-
+            // TODO: Maybe more here, else just lambda (like MentionQuest)
             return true;
         } 
         

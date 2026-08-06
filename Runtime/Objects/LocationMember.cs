@@ -1,4 +1,3 @@
-using NaughtyAttributes;
 using SpaceFoundationSystem;
 using UnityEngine;
 using UnityEngine.Events;
@@ -18,7 +17,7 @@ namespace giorgiokalmund.Dora
         public UnityEvent<Anchor> onLocationChanged = new UnityEvent<Anchor>();
         public UnityEvent<Anchor, Anchor> onLocationChangedWithPrevious = new UnityEvent<Anchor, Anchor>();
 
-        private void Update()
+        private void FixedUpdate()
         {
             if (doUpdate)
                 FindClosestAnchor();
