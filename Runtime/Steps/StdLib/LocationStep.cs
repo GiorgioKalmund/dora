@@ -33,7 +33,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         protected override bool CanProcess(IGameplayEvent e) => e is EnteredLocationEvent;
 
-        protected override void ProcessEvent(IGameplayEvent e)
+        protected override void ProcessEvent(IGameplayEvent e, ref State _)
         {
             Assert.IsTrue(e is EnteredLocationEvent, $"LocationStep is processing invalid event type: {e.GetType()}");
             EnteredLocationEvent entered = (EnteredLocationEvent)e;

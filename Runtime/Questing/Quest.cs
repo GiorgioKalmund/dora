@@ -6,7 +6,6 @@ using giorgiokalmund.Dora.Saving;
 using giorgiokalmund.Dora.Utils;
 using JetBrains.Annotations;
 using NaughtyAttributes;
-using UCGUI;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -17,6 +16,8 @@ namespace giorgiokalmund.Dora.Questing
     [CreateAssetMenu(fileName = "Quest", menuName = "Dora/Quest", order = 1)]
     public class Quest :  BaseComponent<QuestManager>, IEquatable<Quest>, IComparable<Quest>
     {
+        #region Members & Properties
+
         [field: ReadOnly]
         [field: SerializeField, Tooltip("Cannot be recovered or completed. Can be set during every state except if already <see cref=\"QuestState.COMPLETED\"/>.")]
         public bool IsBotched { get; protected set; }
@@ -54,20 +55,7 @@ namespace giorgiokalmund.Dora.Questing
 
         /// <inheritdoc cref="currentStepIdx"> </inheritdoc>
         public int CurrentStepIdx => currentStepIdx;
-
-        internal IEnumerable<AbstractQuestStep> AllRequirementsToValidate => Steps.Where(r =>  !r?.SkipValidation ?? false);
-
-        [Header("Quest Events")]
-        public UnityEvent<QuestState> onStateChanged = new ();
-        public UnityEvent<Quest> onUpdate = new();
-        public UnityEvent<Quest> onComplete = new();
-        public UnityEvent<Quest> onBotch = new();
-        public UnityEvent<Quest> onReset = new();
         
-        [Header("Step Events")]
-        public UnityEvent<AbstractQuestStep> onStepStarted = new ();
-        public UnityEvent<AbstractQuestStep> onStepUpdated = new ();
-        public UnityEvent<AbstractQuestStep> onStepCompleted = new ();
         
         [CanBeNull]
         public AbstractQuestStep CurrentStep
@@ -80,11 +68,35 @@ namespace giorgiokalmund.Dora.Questing
             }
         }
 
+        internal IEnumerable<AbstractQuestStep> AllRequirementsToValidate => Steps.Where(r =>  !r?.SkipValidation ?? false);
+
+        #endregion
+
+        #region Events
+
+        [Header("Quest Events")]
+        public UnityEvent<QuestState> onStateChanged = new ();
+        public UnityEvent<Quest> onUpdate = new();
+        public UnityEvent<Quest> onComplete = new();
+        public UnityEvent<Quest> onBotch = new();
+        public UnityEvent<Quest> onReset = new();
+        
+        [Header("Step Events")]
+        public UnityEvent<AbstractQuestStep> onStepStarted = new ();
+        public UnityEvent<AbstractQuestStep> onStepUpdated = new ();
+        public UnityEvent<AbstractQuestStep> onStepCompleted = new ();
+
+        #endregion
+
         private void Awake()
         {
             Information.Title = name;
         }
         
+        /// <summary>
+        /// Reset the quest and all of its steps (using <see cref="AbstractQuestStep.ResetStep"/> and <see cref="AbstractQuestStep.ResetState"/>).
+        /// </summary>
+        /// <remarks>Also works during runtime, all relevant events are emitted.</remarks>
         internal void ResetQuest()
         {
             if (CurrentStep)
@@ -167,7 +179,7 @@ namespace giorgiokalmund.Dora.Questing
             if (expectedCurrentIndex != currentStepIdx && State == QuestState.ACCEPTED)
                 return QuestValidationInformation.Failure($"Progress has been made to some quest steps but the step index says otherwise (CurrentStepIdx: {currentStepIdx}, Actual Completion Index: {expectedCurrentIndex}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
             
-            if ((State < QuestState.ACCEPTED || currentStepIdx == 0) && ProgressHasBeenMade())
+            if ((State < QuestState.ACCEPTED || currentStepIdx == 0) && AnyQuestStepCompleted())
                 return QuestValidationInformation.Failure($"Progress has been made to some quest steps but the state says otherwise ({State}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
             
             if (State == QuestState.COMPLETED && completedCount != Steps.Length)
@@ -191,7 +203,9 @@ namespace giorgiokalmund.Dora.Questing
 
         #endregion
 
-        // TODO: Maybe have return bool as well and then out QuestStep?
+        #region Progress
+
+        // TODO: Maybe have this return a bool as well and then out the new current QuestStep?
         [CanBeNull]
         protected AbstractQuestStep NextStep()
         {
@@ -225,7 +239,7 @@ namespace giorgiokalmund.Dora.Questing
                 {
                     // In out-of-the-box experience of Dora this should never be invoked as NextStep is ONLY
                     // ever invoked when the current step has completed and fired its completion event.
-                    // However, overrides of this method or control flow changes through inheritance of this class
+                    // However, overrides of this method, or control flow changes through inheritance of this class
                     // might change this restricted calling and thus a separate check is required.
                     DoraLogger.LogWarning("Cannot move onto next step. Current step has not been completed yet.");
                     return null;
@@ -292,6 +306,12 @@ namespace giorgiokalmund.Dora.Questing
             return false;
         }
 
+        /// <summary>
+        /// Attempts to set the state via <see cref="SetState"/>.
+        /// The <see cref="newState"/> must come <b>AFTER</b> the current <see cref="State"/>.
+        /// </summary>
+        /// <param name="newState">The new state to set.</param>
+        /// <returns>Whether setting the state to the new state was successful.</returns>
         internal bool TrySetState(QuestState newState)
         {
             if (IsBotched)
@@ -329,11 +349,13 @@ namespace giorgiokalmund.Dora.Questing
         }
 
         /// <summary>
-        /// Sets the state of the quest. If it is the same as the current one no action is performed.
+        /// Almost fully unchecked setting the <see cref="State"/> of the quest.
+        /// If it is the same as the current one no action is performed.
         /// </summary>
         /// <param name="newState">The new state of the quest.</param>
         /// <param name="silent">Whether to emit related events when setting the new state.</param>
         /// <returns>If the result of setting a new state was successful.</returns>
+        /// <remarks>For regular, consistent integration with your custom system please refer to <see cref="TrySetState"/>.</remarks>
         private bool SetState(QuestState newState, bool silent = false)
         {
             // TODO: Check integrity with events
@@ -378,12 +400,31 @@ namespace giorgiokalmund.Dora.Questing
             return true;
         }
 
-        /// <inheritdoc cref="AbstractQuestStep.ProgressHasBeenMade"> </inheritdoc>
-        public bool ProgressHasBeenMade()
+        /// <summary>
+        /// Whether any quest step has already been completed.
+        /// </summary>
+        public bool AnyQuestStepCompleted()
         {
             return Steps.Any(s => s.ProgressHasBeenMade());
         }
+        
+        
+        private bool CanBeAchieved()
+        {
+            if (IsBotchedOrCompleted)
+                return false;
 
+            if (Steps == null)
+                return false;
+
+            // Check for equality here as in the final step completion we still call NextStep, which advances the index one last time
+            if (currentStepIdx == Steps.Length && (CurrentStep?.IsCompleted ?? true))
+                return true;
+
+            return false;
+        }
+
+        
         /// <summary>
         /// Invokes all step-start related events.
         /// </summary>
@@ -408,7 +449,7 @@ namespace giorgiokalmund.Dora.Questing
             CurrentStep.OnUpdated.RemoveListener(HandleCurrentStepUpdated);
             CurrentStep.OnComplete.RemoveListener(HandleStepCompleted);
         }
-
+        
         /// <summary>
         /// Signals an update in the quest or any of its steps.
         /// </summary>
@@ -462,14 +503,17 @@ namespace giorgiokalmund.Dora.Questing
 #endif
         }
 
+        #region Event Handling
+
         /// <summary>
-        /// If a current step exists, we either try advancing to the next one, or advance the step to <see cref="QuestState.ACHIEVED"/>
+        /// Handles the completion of a step based on <see cref="AbstractQuestStep.OnComplete"/>.
+        /// If a current step exists, we either try advancing to the next one, or advance the quest's state.
         /// </summary>
         private void HandleStepCompleted()
         {
             if (!CurrentStep)
             {
-                DoraLogger.LogError("The current step got completed but is null. Did you subscribe to completion twice?");
+                DoraLogger.LogError("The current step got completed but is null. Did you subscribe to completion more than once?");
                 return;
             }
 
@@ -485,27 +529,19 @@ namespace giorgiokalmund.Dora.Questing
             onStepUpdated.Invoke(CurrentStep);
         }
 
+        #endregion
+
+        #endregion
+
+        #region Rewards
+
         internal void HandOutRewards()
         {
             Rewards?.HandOut();
         }
+        #endregion
 
-        private bool CanBeAchieved()
-        {
-            if (IsBotchedOrCompleted)
-                return false;
-
-            if (Steps == null)
-                return false;
-
-            // Check for equality here as in the final step completion we still call NextStep, which advances the index one last time
-            if (currentStepIdx == Steps.Length && (CurrentStep?.IsCompleted ?? true))
-                return true;
-
-            return false;
-        }
-
-        #region Events
+        #region IGameplayEvents
 
         internal void Process(IGameplayEvent e)
         {
@@ -554,23 +590,7 @@ namespace giorgiokalmund.Dora.Questing
 
         #endregion
 
-        public virtual void OnQuestManagerInit()
-        {
-            foreach (var questStep in Steps)
-                questStep.OnQuestManagerInit();
-            
-            // Init the quest before starting & prepare for gameplay
-            if (CurrentStep != null)
-                StepStartedActions();
-        }
-
-        public virtual void OnQuestManagerDeinit()
-        {
-            foreach (var questStep in Steps)
-                questStep.OnQuestManagerDeinit();
-        }
-
-        #region Saving
+        #region Snapshots
 
         public QuestSnapshot CreateSnapshot(ISerializationProvider serializer)
         {
@@ -673,6 +693,10 @@ namespace giorgiokalmund.Dora.Questing
             if (snapshot.isBotched)
                 Botch();
         }
+        
+        #endregion
+        
+        #region Saving / Loading
 
         public bool Save(ISerializationProvider serializer, IStorageProvider storage)
         {
@@ -697,6 +721,32 @@ namespace giorgiokalmund.Dora.Questing
             var snapshot = serializer.DeserializeData<QuestSnapshot>(questData);
             ApplySnapshot(ref snapshot, serializer);
             return true;
+        }
+
+        #endregion
+        
+        #region Lifecycle Integration
+
+        /// <summary>
+        /// Callback invoked during the <b>Start</b> phase of the <see cref="QuestManager"/>'s lifecycle.
+        /// </summary>
+        public virtual void OnQuestManagerInit()
+        {
+            foreach (var questStep in Steps)
+                questStep.OnQuestManagerInit();
+            
+            // Init the quest before starting & prepare for gameplay
+            if (CurrentStep != null)
+                StepStartedActions();
+        }
+
+        /// <summary>
+        /// Callback invoked during the <b>OnDestroy</b> phase of the <see cref="QuestManager"/>'s lifecycle.
+        /// </summary>
+        public virtual void OnQuestManagerDeinit()
+        {
+            foreach (var questStep in Steps)
+                questStep.OnQuestManagerDeinit();
         }
 
         #endregion

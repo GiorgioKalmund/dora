@@ -108,7 +108,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
             return currentState;
         }
 
-        public override void OnSnapshotApplied(ISerializationProvider serializer, ref State state)
+        public override void ModifyAppliedState(ISerializationProvider serializer, ref State state)
         {
             if (state.poolSnapshots.Length != stepPool.Length)
             {
@@ -169,7 +169,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         protected override bool CanProcess(IGameplayEvent _) => true;
 
-        protected override void ProcessEvent(IGameplayEvent e)
+        protected override void ProcessEvent(IGameplayEvent e, ref State _)
         {
             foreach (var questStep in stepPool)
             {

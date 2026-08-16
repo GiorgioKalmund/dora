@@ -1,4 +1,3 @@
-using System;
 using giorgiokalmund.Dora.Questing.Events;
 using giorgiokalmund.Dora.Saving;
 using UnityEditor;
@@ -8,6 +7,7 @@ namespace giorgiokalmund.Dora.Questing
 {
     public abstract class QuestStep<T> : AbstractQuestStep where T : struct, ISerializableData
     {
+        #region State
         [SerializeField] protected T currentState;
 
         /// <summary>
@@ -15,33 +15,56 @@ namespace giorgiokalmund.Dora.Questing
         /// </summary>
         /// <remarks>Used to overwrite and reset the state.</remarks>
         protected abstract T GetInitialState();
-
-        // Forward event for type safety
-        protected override void ProcessEvent(IGameplayEvent e)
+        
+        /// <summary>
+        /// Returns a copy of the State(<see cref="T"/>) to use for the serialization process.
+        /// </summary>
+        /// <param name="serializer">Reference to the serializer being used as part of the serialization process used to serialize the data.</param>
+        /// <returns>The state to use.</returns>
+        /// <remarks>If you want to modify the state (i.e. <see cref="currentState"/>) <b>BEFORE</b> it is serialized, this is the place.</remarks>
+        public override ISerializableData GetSerializationState(ISerializationProvider serializer)
         {
-            ProcessEvent(e, ref currentState);
+            return currentState;
         }
-
-        protected virtual void ProcessEvent(IGameplayEvent e, ref T state)
+        
+        
+        
+        /// <summary>
+        /// Disposes of the <see cref="currentState"/> and overwrites it with the incoming one.
+        /// </summary>
+        /// <param name="newState">The new state (<see cref="T"/>) to apply.</param>
+        /// <remarks>If called during edit-time, will additionally mark the corresponding ScriptableObject as dirty to persistent the changes in the editor.</remarks>
+        private void ApplyState(ref T newState)
         {
+            // TODO: Maybe unmanaged resources? / Look more into disposing, should be fine for now for simple state objects
+            currentState.Dispose();
+            currentState = newState;
             
+#if UNITY_EDITOR
+            // Persist changes when working in the editor!
+            EditorUtility.SetDirty(this);
+#endif
         }
-
-        public virtual void OnSnapshotApplied(ISerializationProvider serializer, ref T state)
+        
+        /// <summary>
+        /// Allows modifying the <see cref="currentState"/> <b>AFTER</b> a <see cref="QuestStepSnapshot"/> has been applied to the quest step via <see cref="ApplyState"/>.
+        /// </summary>
+        /// <param name="serializer">Reference to the serializer being used as part of the serialization process used to deserialize the data.</param>
+        /// <param name="state">A reference to the <see cref="currentState"/>. Can be safely modified.</param>
+        public virtual void ModifyAppliedState(ISerializationProvider serializer, ref T state)
         {
             // intentionally left blank
         }
         
-        public override ISerializableData GetSerializationState(ISerializationProvider _)
-        {
-            return currentState;
-        }
-
+        /// <summary>
+        /// Resets the current state. 
+        /// </summary>
+        /// <remarks>Base functionality simply overrides it by re-applying the state returned by <see cref="GetInitialState"/>.</remarks>
         public override void ResetState()
         {
             currentState = GetInitialState();
         }
-
+        
         public override bool ProgressHasBeenMade()
         {
             return base.ProgressHasBeenMade();
@@ -49,8 +72,15 @@ namespace giorgiokalmund.Dora.Questing
             // TODO: We sadly cannot check for this, as the GetSerializationState post-pass interferes with this
             // || !currentState.Equals(GetInitialState());
         }
+        
+        #endregion
 
-
+        #region Snapshots
+        /// <summary>
+        /// Applies a <see cref="QuestSnapshot"/> to step's <see cref="currentState"/>, as well as the completion flag.
+        /// </summary>
+        /// <param name="snapshot">The snapshot to apply.</param>
+        /// <param name="serializer">The serializer used during the deserialization process of this quest step. Can be used to further deserialize nested data.</param>
         public override void ApplySnapshot(ref QuestStepSnapshot snapshot, ISerializationProvider serializer)
         {
             var newState = serializer.DeserializeData(snapshot.serializedData , typeof(T));
@@ -78,7 +108,7 @@ namespace giorgiokalmund.Dora.Questing
             }
 
             ApplyState(ref actualNewState);
-            OnSnapshotApplied(serializer, ref currentState);
+            ModifyAppliedState(serializer, ref currentState);
 
             // Early return because after applying the new state the step has completed itself and 'IsCompleted' has updated.
             //
@@ -102,28 +132,33 @@ namespace giorgiokalmund.Dora.Questing
                 IsCompleted = snapshot.isCompleted; // always 'false', just for control flow legibility
             }
         }
+        
+        #endregion
+
+        #region IGameplayEvents
+        /// <summary>
+        /// Handles the forwarding to <see cref="ProcessEvent(IGameplayEvent,ref T)"/>.
+        /// </summary>
+        /// <param name="e">The incoming event.</param>
+        /// <remarks>See <see cref="AbstractQuestStep.ProcessEvent"/>.</remarks>
+        protected sealed override void ProcessEvent(IGameplayEvent e)
+        {
+            ProcessEvent(e, ref currentState);
+        }
 
         /// <summary>
-        /// Returns the Type of the state of the quest. Should in normally <i>not</i> be overriden.
+        /// Handles the processing of an <see cref="IGameplayEvent"/> with an additional reference to the <see cref="currentState"/>.
         /// </summary>
-        /// <returns></returns>
-        public override Type GetStateType()
+        /// <param name="e">The incoming event.</param>
+        /// <param name="state">A reference to the <see cref="currentState"/>. Can be safely modified.</param>
+        /// <remarks>Events passed into here are guarded by <see cref="AbstractQuestStep.CanProcess"/>.
+        /// This might allow you to make some assumptions in regard to casting to specific event types. </remarks>
+        /// <remarks>See <see cref="AbstractQuestStep.ProcessEvent"/>.</remarks>
+        protected virtual void ProcessEvent(IGameplayEvent e, ref T state)
         {
-            return typeof(T);
+            
         }
 
-        private void ApplyState(ref T newState)
-        {
-            // TODO: Maybe unmanaged resources? / Look more into disposing, should be fine for now for simple state objects
-            currentState.Dispose();
-            currentState = newState;
-            
-            
-#if UNITY_EDITOR
-            // Persist changes when working in the editor!
-            EditorUtility.SetDirty(this);
-#endif
-        }
-        
+        #endregion
     }
 }

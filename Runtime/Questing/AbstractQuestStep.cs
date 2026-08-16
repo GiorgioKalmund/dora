@@ -12,6 +12,8 @@ namespace giorgiokalmund.Dora.Questing
     [Serializable]
     public abstract class AbstractQuestStep : ScriptableObject 
     {
+        #region Members & Properties
+
         [field: SerializeField, Tooltip("Whether to skip internal static validation.")]
         public bool SkipValidation { get; protected set; }
         
@@ -24,10 +26,18 @@ namespace giorgiokalmund.Dora.Questing
 
         public bool CanBeCompleted => CheckCompletion() && !IsCompleted;
 
+        #endregion
+
+        #region Events
+
         // TODO: Maybe make event such that += is enforced and no children call invoke it directly and are instead forced to call Complete();
         [NotNull] internal UnityEvent OnComplete = new ();
         [NotNull] internal UnityEvent OnUpdated = new ();
-        
+
+        #endregion
+
+        #region Validation
+
         /// <summary>
         /// Returns the static validation result of the quest step.
         /// </summary>
@@ -47,6 +57,10 @@ namespace giorgiokalmund.Dora.Questing
                 return HandleValidation();
             return QuestValidationInformation.Success();
         }
+        
+        #endregion
+
+        #region Completion
         
         /// <summary>
         /// Returns whether the current state of the quest step allows completion of the step.
@@ -86,6 +100,11 @@ namespace giorgiokalmund.Dora.Questing
             EditorUtility.SetDirty(this);
 #endif
         }
+        
+        #endregion
+
+        #region Updating, Progress & Restting
+
 
         protected void Update()
         {
@@ -102,7 +121,12 @@ namespace giorgiokalmund.Dora.Questing
             EditorUtility.SetDirty(this);
 #endif
         }
-
+        
+        /// <summary>
+        /// Resets the quest requirement to its starting state. All variables which track progress should be reset.
+        /// </summary>
+        public abstract void ResetState();
+        
         /// <summary>
         /// Determines whether any type of progress, either via change in the state, or completion has been made. 
         /// </summary>
@@ -110,20 +134,24 @@ namespace giorgiokalmund.Dora.Questing
         {
             return IsCompleted;
         }
+        
+        #endregion
 
+        #region Snapshots & Serialization
+        
         /// <summary>
-        /// Resets the quest requirement to its starting state. All variables which track progress should be reset.
+        /// Applies a <see cref="QuestSnapshot"/> to step, as well as the completion flag.
         /// </summary>
-        public abstract void ResetState();
+        /// <param name="snapshot">The snapshot to apply.</param>
+        /// <param name="serializer">The serializer used during the deserialization process of this quest step. Can be used to further deserialize nested data.</param>
+        /// <remarks>Left abstract at this point in time as <see cref="QuestStep{T}"/> creates the actual logical foundation for the use of this concept.</remarks>
         public abstract void ApplySnapshot(ref QuestStepSnapshot snapshot, ISerializationProvider serializer);
         
-        public abstract Type GetStateType();
+        
         /// <summary>
-        /// Returns the state object used to serialize and store.
+        /// Creates a new <see cref="QuestStepSnapshot"/> based on the current state of the step.
         /// </summary>
-        /// <remarks>Overriding this can be used to inject custom data which is not tracked by the state into it for serialization.</remarks>
-        public abstract ISerializableData GetSerializationState(ISerializationProvider serializer);
-
+        /// <param name="serializer">The <see cref="ISerializationProvider"/> to use to serialize all related data.</param>
         public QuestStepSnapshot CreateSnapshot(ISerializationProvider serializer)
         {
             ISerializableData currentState = GetSerializationState(serializer);
@@ -133,9 +161,27 @@ namespace giorgiokalmund.Dora.Questing
                 isCompleted = IsCompleted
             };
         }
+        
+        /// <summary>
+        /// Returns the state object used to serialize and store.
+        /// </summary>
+        /// <remarks>Overriding this can be used to inject custom data which is not tracked by the state into it for serialization.</remarks>
+        public abstract ISerializableData GetSerializationState(ISerializationProvider serializer);
 
-        // TODO: Maybe differentiate between editor description and gameplay description?
+        #endregion
+
+        #region Display
+
+        /// <summary>
+        /// Returns a user-friendly description of the step based on its current internal state.
+        /// </summary>
         public abstract string GetDescription();
+        
+        // TODO: Maybe differentiate between editor description and gameplay description?
+
+        #endregion
+
+        #region IGameplayEvents
 
         /// <summary>
         /// Attempts to process an incoming <see cref="IGameplayEvent"/> if it can be processed (<see cref="CanProcess"/>).
@@ -154,7 +200,7 @@ namespace giorgiokalmund.Dora.Questing
         }
 
         /// <summary>
-        /// Whether the type or contents of the incoming <see cref="IGameplayEvent"/> should be passed onto <see cref="ProcessEvent"/>.
+        /// Guards whether the type or contents of the incoming <see cref="IGameplayEvent"/> should be passed onto <see cref="ProcessEvent"/>.
         /// </summary>
         /// <param name="e">The incoming <see cref="IGameplayEvent"/>.</param>
         protected abstract bool CanProcess(IGameplayEvent e);
@@ -165,15 +211,22 @@ namespace giorgiokalmund.Dora.Questing
         /// <param name="e">The incoming <see cref="IGameplayEvent"/></param>.
         protected abstract void ProcessEvent(IGameplayEvent e);
 
+        #endregion
 
+        #region Lifecycle Integration
+
+        /// <inheritdoc cref="Quest.OnQuestManagerInit"> </inheritdoc>
         public virtual void OnQuestManagerInit()
         {
             // Intentionally left blank
         }
 
+        /// <inheritdoc cref="Quest.OnQuestManagerDeinit"> </inheritdoc>
         public virtual void OnQuestManagerDeinit()
         {
             // Intentionally left blank
         }
+
+        #endregion
     }
 }
