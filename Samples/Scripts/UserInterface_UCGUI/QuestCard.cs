@@ -45,27 +45,29 @@ namespace giorgiokalmund.Dora
             _title.Text(_quest.Information.Title);
             _description.Text(_quest.Information.Description);
             _currentStep.Text(_quest.CurrentStep?.ToString());
-            _questStepCount.Text($"{_quest.CurrentCurrentStepIdx}/{_quest.Steps.Length}");
+            _questStepCount.Text($"{_quest.CurrentStepIdx}/{_quest.Steps.Length}");
 
-            _quest.onStepCompleted.AddListener(UpdateStepCount);
             _quest.onStepStarted.AddListener(HandleNewStep);
             _quest.onStepUpdated.AddListener(HandleStepUpdated);
+            _quest.onUpdate.AddListener(UpdateStepCount);
             _quest.onStateChanged.AddListener(UpdateState);
             _quest.onBotch.AddListener(HandleBotch);
+            
+            if (_quest.CurrentStep)
+                HandleStepUpdated(_quest.CurrentStep);
             return this;
         }
 
-        private void HandleStepUpdated(QuestStep step)
+        private void HandleStepUpdated(AbstractQuestStep step)
         {
             _currentStep.Text(step.GetDescription());
         }
 
-        private void HandleNewStep(QuestStep step) => HandleStepUpdated(step);
+        private void HandleNewStep(AbstractQuestStep step) => HandleStepUpdated(step);
 
-        private void UpdateStepCount(QuestStep _ = null)
+        private void UpdateStepCount(Quest quest)
         {
-            // Add one because increment only happens AFTER event fire
-            _questStepCount.Text($"{_quest.CurrentCurrentStepIdx + 1}/{_quest.Steps.Length}");
+            _questStepCount.Text($"{quest.CurrentStepIdx}/{quest.Steps.Length}");
         }
 
         private void HandleBotch(Quest quest)
@@ -80,7 +82,7 @@ namespace giorgiokalmund.Dora
                 .Color(state.GetColor());
             if (state <= QuestState.MENTIONED)
             {
-                UpdateStepCount();
+                UpdateStepCount(_quest);
                 _currentStep.Text("<i>?Current Step</i>");
             }
             if (state >= QuestState.ACHIEVED)

@@ -1,14 +1,16 @@
 using System;
 using giorgiokalmund.Dora.Questing.Events;
+using giorgiokalmund.Dora.Saving;
 using JetBrains.Annotations;
 using NaughtyAttributes;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace giorgiokalmund.Dora.Questing
 {
     [Serializable]
-    public abstract class QuestStep : ScriptableObject 
+    public abstract class AbstractQuestStep : ScriptableObject 
     {
         [field: SerializeField, Tooltip("Whether to skip internal static validation.")]
         public bool SkipValidation { get; protected set; }
@@ -20,7 +22,7 @@ namespace giorgiokalmund.Dora.Questing
         /// Whether it is possible for the requirements to be achieved.
         public bool CanBeAchieved => HandleValidation().IsSuccess;
 
-        public bool CanBeCompleted => CheckCompletion();
+        public bool CanBeCompleted => CheckCompletion() && !IsCompleted;
 
         // TODO: Maybe make event such that += is enforced and no children call invoke it directly and are instead forced to call Complete();
         [NotNull] internal UnityEvent OnComplete = new ();
@@ -78,6 +80,11 @@ namespace giorgiokalmund.Dora.Questing
             
             IsCompleted = true;
             OnComplete.Invoke();
+            
+#if UNITY_EDITOR
+            // Persist changes when working in the editor!
+            EditorUtility.SetDirty(this);
+#endif
         }
 
         protected void Update()
@@ -88,7 +95,43 @@ namespace giorgiokalmund.Dora.Questing
         public void ResetStep()
         {
             IsCompleted = false;
-            OnReset();
+            ResetState();
+            
+#if UNITY_EDITOR
+            // Persist changes when working in the editor!
+            EditorUtility.SetDirty(this);
+#endif
+        }
+
+        /// <summary>
+        /// Determines whether any type of progress, either via change in the state, or completion has been made. 
+        /// </summary>
+        public virtual bool ProgressHasBeenMade()
+        {
+            return IsCompleted;
+        }
+
+        /// <summary>
+        /// Resets the quest requirement to its starting state. All variables which track progress should be reset.
+        /// </summary>
+        public abstract void ResetState();
+        public abstract void ApplySnapshot(ref QuestStepSnapshot snapshot, ISerializationProvider serializer);
+        
+        public abstract Type GetStateType();
+        /// <summary>
+        /// Returns the state object used to serialize and store.
+        /// </summary>
+        /// <remarks>Overriding this can be used to inject custom data which is not tracked by the state into it for serialization.</remarks>
+        public abstract ISerializableData GetSerializationState(ISerializationProvider serializer);
+
+        public QuestStepSnapshot CreateSnapshot(ISerializationProvider serializer)
+        {
+            ISerializableData currentState = GetSerializationState(serializer);
+            return new QuestStepSnapshot()
+            {
+                serializedData = serializer.SerializeData(currentState),
+                isCompleted = IsCompleted
+            };
         }
 
         // TODO: Maybe differentiate between editor description and gameplay description?
@@ -100,6 +143,12 @@ namespace giorgiokalmund.Dora.Questing
         /// <param name="e">The incoming <see cref="IGameplayEvent"/>.</param>
         internal void Process(IGameplayEvent e)
         {
+            if (IsCompleted)
+            {
+                DoraLogger.LogWarning($"The quest step '{name}' has received a '{e.GetType().Name}' event even though it is already marked as completed.");
+                return;
+            }
+            
             if (CanProcess(e))
                 ProcessEvent(e);
         }
@@ -116,13 +165,6 @@ namespace giorgiokalmund.Dora.Questing
         /// <param name="e">The incoming <see cref="IGameplayEvent"/></param>.
         protected abstract void ProcessEvent(IGameplayEvent e);
 
-        /// <summary>
-        /// Resets the quest requirement to its starting state. All variables which track progress should be reset.
-        /// </summary>
-        public virtual void OnReset()
-        {
-            // Intentionally left blank
-        }
 
         public virtual void OnQuestManagerInit()
         {

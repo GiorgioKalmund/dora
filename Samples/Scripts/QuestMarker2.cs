@@ -19,10 +19,6 @@ namespace giorgiokalmund.Dora
         {
             Assert.IsNotNull(quest, "QuestMarker needs a quest to work!");
             
-#if DEBUG
-            quest.ResetQuest(); // TODO: Temporary
-#endif
-            
             quest.onStateChanged.AddListener(HandleStateChanged);
             HandleStateChanged(quest.State);
         }

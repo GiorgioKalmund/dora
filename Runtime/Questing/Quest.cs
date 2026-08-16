@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using giorgiokalmund.Dora.Questing.Events;
+using giorgiokalmund.Dora.Saving;
 using giorgiokalmund.Dora.Utils;
 using JetBrains.Annotations;
 using NaughtyAttributes;
-using NUnit.Framework;
+using UCGUI;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Events;
 
 namespace giorgiokalmund.Dora.Questing
@@ -30,30 +33,44 @@ namespace giorgiokalmund.Dora.Questing
         [field: SerializeField, Tooltip("Information about the quest in general.")]
         public QuestInformation Information { get; protected set; }
 
+        public virtual string StorageIdentifier => Information.identifier;
+
         [field: SerializeField, Tooltip("Optional initial Requirements for the quest to be met.")]
         [CanBeNull]
-        public QuestStep BaseStep { get; protected set; }
+        public AbstractQuestStep BaseStep { get; protected set; }
         
         [field: SerializeField, Tooltip("Optional rewards when the quest is completed.")]
         [CanBeNull]
         public QuestRewards Rewards { get; protected set; }
 
         [field: SerializeField, Tooltip("Individual steps of the quest."), Expandable]
-        public QuestStep[] Steps { get; protected set; }
-        [field: SerializeField][field:ReadOnly] private int currentStepIdx;
-        public int CurrentCurrentStepIdx => currentStepIdx;
+        public AbstractQuestStep[] Steps { get; protected set; }
+        
+        /// <summary>
+        /// Represents the index of the current step if the quest is ACCEPTED, -1 otherwise.
+        /// </summary>
+        [SerializeField, Tooltip("The index of the current step. Is -1 if the quest is not currently accepted.")]
+        private int currentStepIdx;
 
-        internal IEnumerable<QuestStep> AllRequirementsToValidate => Steps.Where(r =>  !r?.SkipValidation ?? false);
+        /// <inheritdoc cref="currentStepIdx"> </inheritdoc>
+        public int CurrentStepIdx => currentStepIdx;
 
+        internal IEnumerable<AbstractQuestStep> AllRequirementsToValidate => Steps.Where(r =>  !r?.SkipValidation ?? false);
+
+        [Header("Quest Events")]
         public UnityEvent<QuestState> onStateChanged = new ();
-        public UnityEvent<QuestStep> onStepStarted = new ();
-        public UnityEvent<QuestStep> onStepUpdated = new ();
-        public UnityEvent<QuestStep> onStepCompleted = new ();
+        public UnityEvent<Quest> onUpdate = new();
         public UnityEvent<Quest> onComplete = new();
         public UnityEvent<Quest> onBotch = new();
+        public UnityEvent<Quest> onReset = new();
+        
+        [Header("Step Events")]
+        public UnityEvent<AbstractQuestStep> onStepStarted = new ();
+        public UnityEvent<AbstractQuestStep> onStepUpdated = new ();
+        public UnityEvent<AbstractQuestStep> onStepCompleted = new ();
         
         [CanBeNull]
-        public QuestStep CurrentStep
+        public AbstractQuestStep CurrentStep
         {
             get
             {
@@ -70,14 +87,23 @@ namespace giorgiokalmund.Dora.Questing
         
         internal void ResetQuest()
         {
+            if (CurrentStep)
+                StepCompletedActions(isReset:true);
+            
             State = QuestState.UNKNOWN;
             onStateChanged.Invoke(State);
             Manager?.onQuestStateChanged?.Invoke(this, State);
-            currentStepIdx = 0;
+            onReset.Invoke(this);
+            currentStepIdx = -1;
             IsBotched = false;
             if (Steps != null)
                 foreach (var questStep in Steps)
                     questStep.ResetStep();
+            
+#if UNITY_EDITOR
+            // Persist changes when working in the editor!
+            EditorUtility.SetDirty(this);
+#endif
         }
 
         #region Validation
@@ -124,6 +150,29 @@ namespace giorgiokalmund.Dora.Questing
                     return result;
             }
 
+            int expectedCurrentIndex = -1;
+            int completedCount = 0;
+            for (var i = 0; i < Steps.Length; i++)
+            {
+                if (Steps[i].IsCompleted)
+                {
+                    expectedCurrentIndex = i + 1;
+                    completedCount++;
+                }
+            }
+            
+            if (currentStepIdx != -1 && State != QuestState.ACCEPTED)
+                return QuestValidationInformation.Failure($"The step index is not what it should be. When not in the 'ACCEPTED' state it should be -1!. Is: {currentStepIdx}.");
+            
+            if (expectedCurrentIndex != currentStepIdx && State == QuestState.ACCEPTED)
+                return QuestValidationInformation.Failure($"Progress has been made to some quest steps but the step index says otherwise (CurrentStepIdx: {currentStepIdx}, Actual Completion Index: {expectedCurrentIndex}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
+            
+            if ((State < QuestState.ACCEPTED || currentStepIdx == 0) && ProgressHasBeenMade())
+                return QuestValidationInformation.Failure($"Progress has been made to some quest steps but the state says otherwise ({State}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
+            
+            if (State == QuestState.COMPLETED && completedCount != Steps.Length)
+                return QuestValidationInformation.Failure("The quest is says it is completed but not all of its steps are completed...");
+
             return ValidateQuestSteps();
         }
 
@@ -144,7 +193,7 @@ namespace giorgiokalmund.Dora.Questing
 
         // TODO: Maybe have return bool as well and then out QuestStep?
         [CanBeNull]
-        protected QuestStep NextStep()
+        protected AbstractQuestStep NextStep()
         {
             if (IsBotchedOrCompleted)
             {
@@ -185,12 +234,28 @@ namespace giorgiokalmund.Dora.Questing
                 StepCompletedActions();
             }
             
-            currentStepIdx++;
+            SetCurrentStep(currentStepIdx + 1);
             
+            return CurrentStep;
+        }
+
+        /// <summary>
+        /// Sets the index of the current step and starts it if it is a valid index.
+        /// </summary>
+        /// <param name="index">The index of the step to set.</param>
+        private void SetCurrentStep(int index)
+        {
+            currentStepIdx = index;
             if (CurrentStep != null)
                 StepStartedActions();
             
-            return CurrentStep;
+            
+#if UNITY_EDITOR
+            // Persist changes when working in the editor!
+            EditorUtility.SetDirty(this);
+#endif
+            
+            Update();
         }
 
         /// <returns></returns>
@@ -260,41 +325,102 @@ namespace giorgiokalmund.Dora.Questing
                 return false;
             }
 
+            return SetState(newState);
+        }
+
+        /// <summary>
+        /// Sets the state of the quest. If it is the same as the current one no action is performed.
+        /// </summary>
+        /// <param name="newState">The new state of the quest.</param>
+        /// <param name="silent">Whether to emit related events when setting the new state.</param>
+        /// <returns>If the result of setting a new state was successful.</returns>
+        private bool SetState(QuestState newState, bool silent = false)
+        {
+            // TODO: Check integrity with events
+            if (newState == State)
+            {
+                //DoraLogger.Log($"Did not set new state. State of {Information} is already in '{State}'!");
+                return false;
+            }
+            
             State = newState;
+            
             onStateChanged.Invoke(State);
             Manager?.onQuestStateChanged.Invoke(this, State);
+            
+            // 
+            // use 'newState' from here on out for logical legibility, however it would be equivalent to use the updated 'State' variable
+            //
 
-            if (State == QuestState.ACCEPTED)
+            // Only re-subscribe if coming from non-accepted state
+            // If we already were in ACCEPTED, we handle the re-subscription via StepStartedActions in SetCurrentStep
+            if (newState == QuestState.ACCEPTED && !silent)
             {
+                currentStepIdx = 0; // indicate the quest has started
                 Assert.IsNotNull(CurrentStep, $"Started the quest {Information} but the first step is null. This is not allowed! A quest must at least have one step if started during runtime.");
                 StepStartedActions();
             }
 
-            if (State == QuestState.ACHIEVED && Rewards == null)
-                return TryAdvanceState(out _);
+            if (newState == QuestState.ACHIEVED && Rewards == null)
+                return TryAdvanceState();
 
-            if (State == QuestState.COMPLETED)
+            if (newState == QuestState.COMPLETED && !silent)
                 CompletedActions();
             
+            
+#if UNITY_EDITOR
+            // Persist changes when working in the editor!
+            EditorUtility.SetDirty(this);
+#endif
+            
+            Update();
+
             return true;
         }
 
+        /// <inheritdoc cref="AbstractQuestStep.ProgressHasBeenMade"> </inheritdoc>
+        public bool ProgressHasBeenMade()
+        {
+            return Steps.Any(s => s.ProgressHasBeenMade());
+        }
+
+        /// <summary>
+        /// Invokes all step-start related events.
+        /// </summary>
+        /// <remarks>As we always unsubscribe when the step is changed (even to itself), we do not guard the event firing here. On rollback this means that this is re-triggered, even if it's still the same step</remarks>
         private void StepStartedActions()
         {
             Assert.IsNotNull(CurrentStep, $"Started the step for quest {Information} but the step is somehow null.");
+            onStepStarted.Invoke(CurrentStep);
             CurrentStep.OnComplete.AddListener(HandleStepCompleted);
             CurrentStep.OnUpdated.AddListener(HandleCurrentStepUpdated);
-            onStepStarted.Invoke(CurrentStep);
         }
 
-        private void StepCompletedActions()
+        /// <summary>
+        /// Invokes all step-completion related events.
+        /// </summary>
+        /// <param name="isReset">Whether to only quietly remove the listeners to the current step. No completions event is fired if set. Used during rollback.</param>
+        private void StepCompletedActions(bool isReset = false)
         {
             Assert.IsNotNull(CurrentStep, $"Completed the step of {Information} but the step is somehow null.");
-            onStepCompleted.Invoke(CurrentStep);
+            if (!isReset)
+                onStepCompleted.Invoke(CurrentStep);
             CurrentStep.OnUpdated.RemoveListener(HandleCurrentStepUpdated);
             CurrentStep.OnComplete.RemoveListener(HandleStepCompleted);
         }
 
+        /// <summary>
+        /// Signals an update in the quest or any of its steps.
+        /// </summary>
+        public void Update()
+        {
+            onUpdate.Invoke(this);
+        }
+
+        /// <summary>
+        /// Botches the quest.
+        /// </summary>
+        /// <returns>Whether botching was successful. For example, fails when it is already completed or botched.</returns>
         internal bool Botch()
         {
             if (IsBotchedOrCompleted)
@@ -307,22 +433,51 @@ namespace giorgiokalmund.Dora.Questing
             return true;
         }
 
+        /// <summary>
+        /// Internal actions and events related to botching the quest.
+        /// </summary>
         private void BotchedActions()
         {
             IsBotched = true;
+            
+#if UNITY_EDITOR
+            // Persist changes when working in the editor!
+            EditorUtility.SetDirty(this);
+#endif
             onBotch.Invoke(this);
         }
-
+        
+        /// <summary>
+        /// Internal actions and events related to completing the quest, such as handing out rewards.
+        /// </summary>
         private void CompletedActions()
         {
             onComplete.Invoke(this);
             HandOutRewards();
+            currentStepIdx = -1;
+            
+#if UNITY_EDITOR
+            // Persist changes when working in the editor!
+            EditorUtility.SetDirty(this);
+#endif
         }
 
+        /// <summary>
+        /// If a current step exists, we either try advancing to the next one, or advance the step to <see cref="QuestState.ACHIEVED"/>
+        /// </summary>
         private void HandleStepCompleted()
         {
+            if (!CurrentStep)
+            {
+                DoraLogger.LogError("The current step got completed but is null. Did you subscribe to completion twice?");
+                return;
+            }
+
             if (NextStep() == null)
-                TryAdvanceState(out _);
+            {
+                Assert.IsTrue(State == QuestState.ACCEPTED, $"Quest {Information}: A step was completed but the quest is not in the 'ACCEPTED' state.");
+                TryAdvanceState(); // After accepted, either move on to ACHIEVED if rewards present, else completed
+            }
         }
         
         private void HandleCurrentStepUpdated()
@@ -354,7 +509,12 @@ namespace giorgiokalmund.Dora.Questing
 
         internal void Process(IGameplayEvent e)
         {
-            CurrentStep?.Process(e);
+            if (CurrentStep != null)
+                CurrentStep.Process(e);
+            else
+            {
+                Debug.Log("no step can process the incoming event");
+            }
         }
 
         #endregion
@@ -398,6 +558,10 @@ namespace giorgiokalmund.Dora.Questing
         {
             foreach (var questStep in Steps)
                 questStep.OnQuestManagerInit();
+            
+            // Init the quest before starting & prepare for gameplay
+            if (CurrentStep != null)
+                StepStartedActions();
         }
 
         public virtual void OnQuestManagerDeinit()
@@ -405,5 +569,136 @@ namespace giorgiokalmund.Dora.Questing
             foreach (var questStep in Steps)
                 questStep.OnQuestManagerDeinit();
         }
+
+        #region Saving
+
+        public QuestSnapshot CreateSnapshot(ISerializationProvider serializer)
+        {
+            int count;
+            if (State >= QuestState.ACHIEVED) // capture all steps if achieved or completed
+                count = Steps.Length;
+            else if (State == QuestState.ACCEPTED) // capture only necessary if accepted
+                count = currentStepIdx + 1;
+            else count = 0; // capture none otherwise
+            
+            QuestStepSnapshot[] snapshots = new QuestStepSnapshot[count];
+
+            // Only collect steps until the current step as future steps should have not been changed
+            for (var i = 0; i < count; i++)
+            {
+                var snapshot = Steps[i].CreateSnapshot(serializer);
+                snapshots[i] = snapshot;
+            }
+            
+            return new QuestSnapshot()
+            {
+                currentStep = currentStepIdx,
+                state = State,
+                isBotched = IsBotched,
+                stepSnapshots = snapshots
+            };
+        }
+
+        public void ApplySnapshot(ref QuestSnapshot snapshot, ISerializationProvider serializer)
+        {
+            //
+            // Pre-verify some integrity of the snapshot
+            //
+            
+            if (snapshot.state > QuestState.COMPLETED)
+            {
+                DoraLogger.LogError("Error applying snapshot: Invalid state!");
+                return;
+            }
+            
+            if (snapshot.stepSnapshots.Length > Steps.Length)
+            {
+                DoraLogger.LogError($"Error applying snapshot: The snapshot contains more steps ({snapshot.stepSnapshots.Length}) than the quest ({Steps.Length})!");
+                return;
+            }
+            
+            if (snapshot.currentStep >= Steps.Length && snapshot.state != QuestState.COMPLETED)
+            {
+                DoraLogger.LogError("Error applying snapshot: Invalid current step!");
+                return;
+            }
+
+            // Ensure that the snapshot only contains steps which are completed
+            // This is in line with the saving logic as all non-completed steps,
+            // which are not the current step, are ignored by saving.
+            // 
+            // If we encounter a step which isn't completed, it must be the last one.
+            bool firstNonCompletion = false;
+            foreach (var snapshotStepSnapshot in snapshot.stepSnapshots)
+            {
+                if (firstNonCompletion)
+                {
+                    DoraLogger.LogError( "Error applying snapshot: Invalid serialized step layout!\n<b>Hint:</b> If loading encounters a step which isn't completed, it must be the last one. Your data might be incorrectly tampered with.");
+                    return;
+                }
+
+                if (!snapshotStepSnapshot.isCompleted)
+                    firstNonCompletion = true;
+            }
+            
+            
+            // Re-apply all steps by either grabbing their data from the snapshot,
+            // or resetting them with the initial / base state + un-completion
+            //
+            // If only we would only override the steps which are part of the incoming snapshot
+            // then steps which come later would keep their advanced state.
+            // To save space we simply tell them to reset, instead of having to store a copy of their empty state. This should lead to the same result.
+            for (int i = 0; i < Steps.Length; i++)
+            {
+                // If part of snapshot, apply snapshot entry
+                if (i < snapshot.stepSnapshots.Length)
+                    // TODO: Explore if 'in' or 'ref readonly' (maybe available later Unity versions) as no write should be necessary
+                    Steps[i].ApplySnapshot(ref snapshot.stepSnapshots[i], serializer);
+                else 
+                    Steps[i].ResetStep();
+            }
+            
+            if (snapshot.state == QuestState.ACCEPTED && State != QuestState.ACCEPTED)
+                // We have to manually start the quest here as it was not registered at this point yet.
+                Manager?.Register(this);
+            
+            if (CurrentStep) // CurrentStep only exists if quest hasn't been completed yet. If completed we cannot clean this up as it already was.
+                StepCompletedActions(isReset:true); // First clean up all subscriptions to the current step 
+            
+            // TODO: Do we really want to re-emit events here + hand out rewards etc?
+            SetState(snapshot.state, true);
+            
+            SetCurrentStep(snapshot.currentStep); // Then 'start' a new step, whether it is the same or an old one
+            
+            if (snapshot.isBotched)
+                Botch();
+        }
+
+        public bool Save(ISerializationProvider serializer, IStorageProvider storage)
+        {
+            if (string.IsNullOrEmpty(StorageIdentifier))
+            {
+                DoraLogger.LogError($"Cannot save quest {Information}. Identifier either null or empty! An identifier is required to store the quest.");
+                return false;
+            }
+            
+            var questData = serializer.SerializeData(CreateSnapshot(serializer));
+            storage.Store(StorageIdentifier, questData);
+            return true;
+        }
+        
+        public bool Load(ISerializationProvider serializer, IStorageProvider storage)
+        {
+            if (!storage.TryLoad(StorageIdentifier, out string questData))
+            {
+                DoraLogger.LogWarning($"Cannot load quest {Information}. No matching entry in storage found for identifier: '{StorageIdentifier}'.");
+                return false;
+            }
+            var snapshot = serializer.DeserializeData<QuestSnapshot>(questData);
+            ApplySnapshot(ref snapshot, serializer);
+            return true;
+        }
+
+        #endregion
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using giorgiokalmund.Dora.Questing;
+using giorgiokalmund.Dora.Saving;
 using giorgiokalmund.Dora.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -51,8 +52,7 @@ namespace giorgiokalmund.Dora.Editor
                         ValidationErrorMessages.AddRange(res);
                     validatedAtLeastOnce = true;
                 }
-                EditorGUI.BeginDisabledGroup(!quest.BaseStep);
-                if (GUILayout.Button("Validate Base + Steps"))
+                if (GUILayout.Button("Validate"))
                 {
                     ValidationErrorMessages.Clear();
                     var res = QuestValidator.Validate(quest);
@@ -60,13 +60,25 @@ namespace giorgiokalmund.Dora.Editor
                         ValidationErrorMessages.Add(res);
                     validatedAtLeastOnce = true;
                 }
-                EditorGUI.EndDisabledGroup();
                 GUILayout.EndHorizontal();
                 
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("DEBUG: Reset"))
                 {
                     quest.ResetQuest();
+                }
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                // TODO: Is this the UI / UX we want? no
+                if (GUILayout.Button("<b>TODO: Save</b>", QuestDrawer.TodoButton))
+                {
+                    // TODO: Allow to change path used
+                    quest.Save(new JsonSerializationProvider(), new JsonFileStorageProvider(Application.persistentDataPath));
+                }
+                if (GUILayout.Button("<b>TODO: Load</b>", QuestDrawer.TodoButton))
+                {
+                    // TODO: Allow to change path used
+                    quest.Load(new JsonSerializationProvider(), new JsonFileStorageProvider(Application.persistentDataPath));
                 }
                 GUILayout.EndHorizontal();
 

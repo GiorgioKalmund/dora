@@ -22,8 +22,20 @@ MonoBehaviour:
   <Rewards>k__BackingField: {fileID: 0}
   <Steps>k__BackingField:
   - {fileID: 11400000, guid: e98e541cbd05b49ba89d6d3e5b565b8b, type: 2}
-  currentStepIdx: 0
+  currentStepIdx: -1
   onStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onUpdate:
+    m_PersistentCalls:
+      m_Calls: []
+  onComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  onBotch:
+    m_PersistentCalls:
+      m_Calls: []
+  onReset:
     m_PersistentCalls:
       m_Calls: []
   onStepStarted:
@@ -33,8 +45,5 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onStepCompleted:
-    m_PersistentCalls:
-      m_Calls: []
-  onComplete:
     m_PersistentCalls:
       m_Calls: []

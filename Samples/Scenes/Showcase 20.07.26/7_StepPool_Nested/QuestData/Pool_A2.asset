@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Steps.StdLib.StepPool
   <SkipValidation>k__BackingField: 0
   <IsCompleted>k__BackingField: 0
+  currentState:
+    poolSnapshots: []
+  mode: 0
+  specificStepCount: 0
   stepPool:
   - {fileID: 11400000, guid: 374373c0050834927a2d6a4fe9460739, type: 2}
   - {fileID: 11400000, guid: a2b4914ecc346415caed316fb9e8928f, type: 2}
-  mode: 0
-  specificStepCount: 0

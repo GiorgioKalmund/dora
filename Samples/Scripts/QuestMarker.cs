@@ -26,11 +26,6 @@ namespace giorgiokalmund.Dora
         {
             Assert.IsNotNull(quest, "QuestMarker needs a quest to work!");
             
-#if DEBUG
-            quest.ResetQuest(); // TODO: Temporary
-#endif
-
-
             QuestState relatedState = stateToAdvance switch
             {
                 MarkerAction.MENTION => QuestState.MENTIONED,

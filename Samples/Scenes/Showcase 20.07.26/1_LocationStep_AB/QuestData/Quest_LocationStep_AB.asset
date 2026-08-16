@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Quest_LocationStep_AB
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Questing.Quest
   <IsBotched>k__BackingField: 0
-  <State>k__BackingField: 4
+  <State>k__BackingField: 0
   <Information>k__BackingField:
     identifier: ab
     <Title>k__BackingField: Quest_LocationStep_AB
@@ -24,8 +24,20 @@ MonoBehaviour:
   <Steps>k__BackingField:
   - {fileID: 11400000, guid: 95ea1c3f924a14d5ea476e77e8750f9f, type: 2}
   - {fileID: 11400000, guid: 1778d66afe44f44c2805fb6b9158a0da, type: 2}
-  currentStepIdx: 2
+  currentStepIdx: -1
   onStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onUpdate:
+    m_PersistentCalls:
+      m_Calls: []
+  onComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  onBotch:
+    m_PersistentCalls:
+      m_Calls: []
+  onReset:
     m_PersistentCalls:
       m_Calls: []
   onStepStarted:
@@ -35,8 +47,5 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onStepCompleted:
-    m_PersistentCalls:
-      m_Calls: []
-  onComplete:
     m_PersistentCalls:
       m_Calls: []

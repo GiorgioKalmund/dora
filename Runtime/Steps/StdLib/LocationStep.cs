@@ -2,9 +2,9 @@ using giorgiokalmund.Dora.Editor;
 using giorgiokalmund.Dora.Questing;
 using giorgiokalmund.Dora.Questing.Events;
 using NaughtyAttributes;
-using NUnit.Framework;
 using SpaceFoundationSystem;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace giorgiokalmund.Dora.Steps.StdLib
 {
@@ -28,7 +28,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         public override string GetDescription()
         {
-            return $"Visit {SpaceFoundation.Current.GetAnchorName(anchor)}";
+            return $"Visit {spaceFoundationData.GetAnchorName(anchor)}";
         }
 
         protected override bool CanProcess(IGameplayEvent e) => e is EnteredLocationEvent;

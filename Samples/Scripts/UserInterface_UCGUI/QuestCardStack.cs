@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using giorgiokalmund.Dora.Questing;
 using UCGUI;
-using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace giorgiokalmund.Dora
 {
@@ -23,10 +24,16 @@ namespace giorgiokalmund.Dora
 
             if (!_currentQuests.ContainsKey(quest))
             {
-                var newCard = UI.N<QuestCard>().Init(quest);
-                _currentQuests.Add(quest, newCard);
-                Add(newCard);
+                CreateQuestCard(quest);
             }
+        }
+
+        private void CreateQuestCard(Quest quest)
+        {
+            Assert.IsTrue(!_currentQuests.ContainsKey(quest));
+            var newCard = UI.N<QuestCard>().Init(quest);
+            _currentQuests.Add(quest, newCard);
+            Add(newCard);
         }
 
         protected override void Awake()
@@ -35,6 +42,19 @@ namespace giorgiokalmund.Dora
             QuestManager.Current.onQuestStateChanged.AddListener(HandleQuestUpdate);
             DisplayName = "Quest Stack";
             Spacing(20);
+
+            foreach (var quest in QuestManager.Current.all.Where(q => q.State != QuestState.UNKNOWN))
+            {
+                HandleQuestUpdate(quest, quest.State);
+            }
+
+            /* TODO: Test fully integrated initialization on startup. 
+            foreach (var quest in QuestManager.Current.all.Where(s => s.State != QuestState.UNKNOWN))
+            {
+                CreateQuestCard(quest);
+                QuestManager.Current.Register(quest);
+            }
+            */
         }
 
         private void OnDestroy()

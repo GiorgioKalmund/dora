@@ -24,8 +24,20 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9460505fcf5c44d9898cca80486eee13, type: 2}
   - {fileID: 11400000, guid: 1ed82c9731e7a4e858af631b85951b6f, type: 2}
   - {fileID: 11400000, guid: af6e3fb06f7654c4dbabb6e0f4374818, type: 2}
-  currentStepIdx: 0
+  currentStepIdx: -1
   onStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onUpdate:
+    m_PersistentCalls:
+      m_Calls: []
+  onComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  onBotch:
+    m_PersistentCalls:
+      m_Calls: []
+  onReset:
     m_PersistentCalls:
       m_Calls: []
   onStepStarted:
@@ -35,8 +47,5 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onStepCompleted:
-    m_PersistentCalls:
-      m_Calls: []
-  onComplete:
     m_PersistentCalls:
       m_Calls: []

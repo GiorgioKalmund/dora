@@ -16,14 +16,26 @@ MonoBehaviour:
   <State>k__BackingField: 0
   <Information>k__BackingField:
     identifier: pool-all
-    <Title>k__BackingField: Quest_StepPool_Specific
+    <Title>k__BackingField: Quest_StepPool_All
     <Description>k__BackingField: 
   <BaseStep>k__BackingField: {fileID: 0}
   <Rewards>k__BackingField: {fileID: 0}
   <Steps>k__BackingField:
   - {fileID: 11400000, guid: 66dcd82590cfb4d9f896dd50a4d281d3, type: 2}
-  currentStepIdx: 0
+  currentStepIdx: -1
   onStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onUpdate:
+    m_PersistentCalls:
+      m_Calls: []
+  onComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  onBotch:
+    m_PersistentCalls:
+      m_Calls: []
+  onReset:
     m_PersistentCalls:
       m_Calls: []
   onStepStarted:
@@ -33,8 +45,5 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onStepCompleted:
-    m_PersistentCalls:
-      m_Calls: []
-  onComplete:
     m_PersistentCalls:
       m_Calls: []

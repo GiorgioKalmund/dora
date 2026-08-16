@@ -9,7 +9,22 @@ namespace giorgiokalmund.Dora.Editor
     {
         
         #region Styles
-        public static GUIStyle RichText = new GUIStyle(EditorStyles.label) { richText = true, wordWrap = true};
+        private static GUIStyle _todoButton;
+        public static GUIStyle TodoButton
+        {
+            get
+            {
+                if (_todoButton == null)
+                {
+                    _todoButton = new GUIStyle(EditorStyles.miniButton);
+                    _todoButton.richText = true;
+                    _todoButton.normal.textColor = Color.cyan;
+                }
+                return _todoButton;
+            }
+        }
+        public static GUIStyle RichText = new GUIStyle(EditorStyles.boldLabel) { richText = true, wordWrap = true};
+        
         private static GUIStyle _okText;
         public static GUIStyle OkText
         {

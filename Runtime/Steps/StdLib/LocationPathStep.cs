@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using giorgiokalmund.Dora.Questing;
 using giorgiokalmund.Dora.Questing.Events;
+using giorgiokalmund.Dora.Saving;
 using NaughtyAttributes;
 using SpaceFoundationSystem;
 using UnityEngine;
@@ -9,8 +10,9 @@ using UnityEngine;
 namespace giorgiokalmund.Dora.Steps.StdLib
 {
     [CreateAssetMenu(fileName = "LocationPath", menuName = "Dora/Steps/LocationPath")]
-    public class LocationPathStep : QuestStep
+    public class LocationPathStep : QuestStep<LocationPathStep.State>
     {
+        #region SerializedState
         [SerializeField] protected SpaceFoundationData spaceFoundationData;
         // TODO: Maybe only show options of valid strings here, similar to regular LocationStep / validate on the fly
         [SerializeField] private string[] path;
@@ -19,23 +21,40 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         [SerializeField] private float maxDistance;
         [ShowIf(nameof(hasMaxDistance))]
         [ShowNonSerializedField]
-        private float accumulatedDistance;
+        private float _accumulatedDistance;
         
         /// <summary>
         /// Used to create the path description (<see cref="PathDescription"/>). Cached to avoid recreating objects.
         /// </summary>
-        StringBuilder _stringBuilder = new StringBuilder();
+        StringBuilder _stringBuilder = new ();
+        #endregion
+
+        #region State
+
+        [Serializable]
+        public struct State : ISerializableData<State>
+        {
+            public int pathIndex;
+
+            public void Dispose() { }
+
+            public bool Equals(State other)
+            {
+                return pathIndex == other.pathIndex;
+            }
+        }
+
+        #endregion
         
-        [SerializeField] [field: ReadOnly] private int pathIndex;
-        public int CurrentPathIdx => pathIndex;
-        private string CurrentPathID => path[pathIndex];
+        public int CurrentPathIdx => currentState.pathIndex;
+        private string CurrentPathID => path[currentState.pathIndex];
         
         protected override QuestValidationInformation HandleValidation()
         {
             if (!spaceFoundationData)
                 return QuestValidationInformation.Failure("No SpaceFoundation Data!");
 
-            accumulatedDistance = 0;
+            _accumulatedDistance = 0;
             string overflowCandidate = null;
             for (var i = 0; i < path.Length; i++)
             {
@@ -48,21 +67,21 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                     Vector3Int anchorPosDiscretized = spaceFoundationData.anchorToVoxelPositionDict.Get(anchorID);
                     Vector3Int anchorPosNextDiscretized = spaceFoundationData.anchorToVoxelPositionDict.Get(path[i+1]);
                     
-                    accumulatedDistance += (anchorPosNextDiscretized - anchorPosDiscretized).magnitude;
+                    _accumulatedDistance += (anchorPosNextDiscretized - anchorPosDiscretized).magnitude;
                     if (hasMaxDistance)
                     {
-                        if (accumulatedDistance > maxDistance && overflowCandidate == null)
+                        if (_accumulatedDistance > maxDistance && overflowCandidate == null)
                             overflowCandidate = anchorID;
                     }
                 }
             }
             
             if (hasMaxDistance && overflowCandidate != null)
-                return QuestValidationInformation.Failure($"The distance of the path ({accumulatedDistance}m) is larger than the maximum allowed distance ({maxDistance}m)\nThe first candidate to initialize the overflow was the path segment related to anchorID {overflowCandidate}.");
+                return QuestValidationInformation.Failure($"The distance of the path ({_accumulatedDistance}m) is larger than the maximum allowed distance ({maxDistance}m)\nThe first candidate to initialize the overflow was the path segment related to anchorID {overflowCandidate}.");
             
             return QuestValidationInformation.Success();
         }
-
+        
         public override string GetDescription()
         {
             return CurrentPathIdx < path.Length 
@@ -76,7 +95,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                 _stringBuilder.Clear();
                 for (var i = 0; i < path.Length; i++)
                 {
-                    _stringBuilder.Append($"[{path[i]}]");
+                    _stringBuilder.Append($"[{spaceFoundationData.GetAnchorName(path[i])}]");
                     if (i < path.Length - 1)
                         _stringBuilder.Append("-");
                 }
@@ -88,24 +107,34 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         protected override bool CheckCompletion()
         {
-            return pathIndex == path.Length;
+            return currentState.pathIndex >= path.Length;
         }
 
-        protected override void ProcessEvent(IGameplayEvent e)
+        protected override void ProcessEvent(IGameplayEvent e, ref State state)
         {
             EnteredLocationEvent entered = (EnteredLocationEvent)e;
             if (entered.Location.Equals(CurrentPathID))
             {
-                pathIndex++;
+                state.pathIndex++;
                 if (!TryComplete())
+                {
                     Update();
+                }
             }
         }
 
-        public override void OnReset()
+        public override void ResetState()
         {
-            pathIndex = 0;
-            accumulatedDistance = 0;
+            base.ResetState();
+            _accumulatedDistance = 0;
+        }
+
+        protected override State GetInitialState()
+        {
+            return new State()
+            {
+                pathIndex = 0
+            };
         }
     }
 }

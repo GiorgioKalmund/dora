@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using giorgiokalmund.Dora.Questing;
 using giorgiokalmund.Dora.Questing.Events;
@@ -5,6 +6,7 @@ using giorgiokalmund.Dora.Utils;
 using SpaceFoundationSystem;
 using UnityEngine;
 using UnityEngine.Events;
+using Assert = UnityEngine.Assertions.Assert;
 
 namespace giorgiokalmund.Dora
 {
@@ -23,6 +25,8 @@ namespace giorgiokalmund.Dora
         
         [Header("Quests")]
         [SerializeField] public Quest[] all;
+
+        private HashSet<Quest> _currentlyRegistered = new HashSet<Quest>();
 
         #region EventBus
 
@@ -53,6 +57,14 @@ namespace giorgiokalmund.Dora
             }
             
             _eventBus = new GameplayEventBus();
+            
+            // Prepare gameplay hooks early
+            foreach (var quest in all.Where(s => s.State == QuestState.ACCEPTED))
+            {
+                Register(quest);
+            }
+            
+            onQuestStateChanged.AddListener(HandleQuestStateChanged);
         }
         
         private void Start()
@@ -60,7 +72,7 @@ namespace giorgiokalmund.Dora
             if (all == null)
                 return;
             foreach (var quest in all)
-                quest?.AddTo(this);
+                quest.AddTo(this);
             
             foreach (var quest in all)
                 quest.OnQuestManagerInit();
@@ -68,8 +80,19 @@ namespace giorgiokalmund.Dora
 
         private void OnDestroy()
         {
+            onQuestStateChanged.RemoveListener(HandleQuestStateChanged);
+            
             foreach (var quest in all)
                 quest.OnQuestManagerDeinit();
+        }
+        
+        private void HandleQuestStateChanged(Quest quest, QuestState newState)
+        {
+            // if a quest has been reset to a non-accepted state via rollback we need to unregister it again manually here
+            if (newState < QuestState.ACCEPTED && _currentlyRegistered.Contains(quest))
+            {
+                Unregister(quest);
+            }
         }
 
         public void RegisterMainActor(LocationMember locationMember)
@@ -133,7 +156,7 @@ namespace giorgiokalmund.Dora
             if (quest.State == QuestState.ACHIEVED)
                 return CompleteQuest(quest);
             
-            return quest.TryAdvanceState(out _);
+            return quest.TryAdvanceState();
         }
 
         private bool SetQuestStateInternal(Quest quest, QuestState state)
@@ -165,21 +188,44 @@ namespace giorgiokalmund.Dora
                 DoraLogger.LogError($"Cannot reset {quest.Information}. Not tracked by this QuestManager.", this);
                 return ;
             }
-
+            
             quest.ResetQuest();
         }
         
-        private void Register(Quest quest)
+        public void Register(Quest quest)
         {
+            if (_currentlyRegistered.Contains(quest))
+            {
+                DoraLogger.LogError($"The quest '{quest.Information}' has already been registered by the manager. Please refrain from re-registering the same quest twice.");
+                return;
+            }
+            
             // TODO: Instead of listening to all, maybe filter out quest first or something or make the 
+            Assert.IsNotNull(_eventBus, "QuestManager should have an event bus!");
             _eventBus.OnPublished.AddListener(quest.Process);
+            
             quest.onComplete.AddListener(Unregister);
+            quest.onReset.AddListener(Unregister);
             quest.onBotch.AddListener(Unregister);
+            
+            _currentlyRegistered.Add(quest);
         }
 
         private void Unregister(Quest quest)
         {
+            if (!_currentlyRegistered.Contains(quest))
+            {
+                DoraLogger.LogError($"The quest '{quest.Information}' has not yet been registered by the manager. Please refrain from unregistering an untracked quest.");
+                return;
+            }
+            
+            _currentlyRegistered.Remove(quest);
+            
+            quest.onBotch.RemoveListener(Unregister);
+            quest.onReset.RemoveListener(Unregister);
             quest.onComplete.RemoveListener(Unregister);
+            
+            Assert.IsNotNull(_eventBus, "QuestManager should have an event bus!");
             _eventBus.OnPublished.RemoveListener(quest.Process);
         }
 
