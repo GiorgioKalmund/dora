@@ -1,4 +1,4 @@
-namespace giorgiokalmund.Dora.Saving
+namespace giorgiokalmund.Dora.Saving.StorageProviders
 {
     public class JsonFileStorageProvider : SimpleFileStorageProvider
     {

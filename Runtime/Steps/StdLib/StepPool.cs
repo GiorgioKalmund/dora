@@ -6,7 +6,6 @@ using giorgiokalmund.Dora.Questing.Events;
 using giorgiokalmund.Dora.Saving;
 using NaughtyAttributes;
 using SpaceFoundationSystem.Util;
-using UnityEditor;
 using UnityEngine;
 
 namespace giorgiokalmund.Dora.Steps.StdLib
@@ -32,9 +31,18 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         }
         
         
-        public Mode mode;
+        /// <summary>
+        /// The mode the pool is in.
+        /// </summary>
+        [Header("General")]
+        [SerializeField, Tooltip("The mode the pool is in.")] private Mode mode;
+
+        /// <summary>
+        /// If set, will not pass on an incoming event to the following steps in the pool if it was successfully processed by a step.
+        /// </summary>
+        [SerializeField, Tooltip("If set, will not pass on an incoming event to the following steps in the pool if it was successfully processed by a step.")] private bool consumeEventsOnSuccess;
         
-        [Header("SPECIFIC only")]
+        [Header("'SPECIFIC' only")]
         [ShowIf(nameof(mode), Mode.SPECIFIC)]
         public int specificStepCount;
 
@@ -42,7 +50,6 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         [Serializable]
         public struct State : ISerializableData<State>
         {
-            //[HideInInspector]
             [SerializeField] internal QuestStepSnapshot[] poolSnapshots;
             
             public void Dispose()
@@ -120,14 +127,14 @@ namespace giorgiokalmund.Dora.Steps.StdLib
             }
         }
 
-        protected override QuestValidationInformation HandleValidation()
+        protected override QuestValidationInformation HandleValidation(bool isRuntime)
         {
             if (mode == Mode.SPECIFIC && specificStepCount > stepPool.Length)
                 return QuestValidationInformation.Failure( $"<specificStepCount> is too large ({specificStepCount}). Maximum allowed value: {stepPool.Length}");
             
             foreach (var questStep in stepPool)
             {
-                var res = questStep.Validate();
+                var res = questStep.Validate(isRuntime);
                 if (res.IsFailure)
                     return res;
             }
@@ -169,13 +176,26 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         protected override bool CanProcess(IGameplayEvent _) => true;
 
-        protected override void ProcessEvent(IGameplayEvent e, ref State _)
+        protected override bool ProcessEvent(IGameplayEvent e, ref State _)
         {
+            bool success = false;
             foreach (var questStep in stepPool)
             {
-                if (!questStep.IsCompleted)
-                    questStep.Process(e);
+                if (questStep.IsCompleted)
+                    continue;
+            
+                if (questStep.Process(e))
+                {
+                    if (consumeEventsOnSuccess)
+                        return true;
+                    
+                    // If not consume on first success,
+                    // still indicate that some success has happened
+                    success = true;
+                }
             }
+
+            return success;
         }
 
         public override void ResetState()

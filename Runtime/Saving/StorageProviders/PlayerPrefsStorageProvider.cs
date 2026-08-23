@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace giorgiokalmund.Dora.Saving
+namespace giorgiokalmund.Dora.Saving.StorageProviders
 {
     public class PlayerPrefsStorageProvider : IStorageProvider
     {

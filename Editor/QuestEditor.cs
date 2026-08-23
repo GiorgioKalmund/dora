@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using giorgiokalmund.Dora.Questing;
 using giorgiokalmund.Dora.Saving;
+using giorgiokalmund.Dora.Saving.SerializationProviders;
+using giorgiokalmund.Dora.Saving.StorageProviders;
 using giorgiokalmund.Dora.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -47,7 +49,7 @@ namespace giorgiokalmund.Dora.Editor
                 if (GUILayout.Button("Validate All Steps"))
                 {
                     ValidationErrorMessages.Clear();
-                    var res = QuestValidator.ValidateAllQuestSteps(quest);
+                    var res = QuestValidator.ValidateAllQuestSteps(quest, Application.isPlaying);
                     if (res != null)
                         ValidationErrorMessages.AddRange(res);
                     validatedAtLeastOnce = true;
@@ -55,7 +57,7 @@ namespace giorgiokalmund.Dora.Editor
                 if (GUILayout.Button("Validate"))
                 {
                     ValidationErrorMessages.Clear();
-                    var res = QuestValidator.Validate(quest);
+                    var res = QuestValidator.Validate(quest, Application.isPlaying);
                     if (res != null)
                         ValidationErrorMessages.Add(res);
                     validatedAtLeastOnce = true;
@@ -87,7 +89,7 @@ namespace giorgiokalmund.Dora.Editor
                 {
                     EditorGUILayout.Separator();
                     GUILayout.Label("<b>BASE REQUIREMENT</b>", QuestDrawer.RichText);
-                    if (!quest.BaseStep.CanBeAchieved)
+                    if (!quest.BaseStep.CanBeAchievedAtEditTime)
                         QuestDrawer.RichText.normal.textColor = disabledColor;
                     GUILayout.Label($"{quest.BaseStep.GetDescription()}", QuestDrawer.RichText);
                     QuestDrawer.RichText.normal.textColor = defaultColor;

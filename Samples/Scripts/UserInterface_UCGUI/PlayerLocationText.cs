@@ -2,7 +2,7 @@ using SpaceFoundationSystem;
 using UCGUI;
 using UnityEngine.Assertions;
 
-namespace giorgiokalmund.Dora
+namespace giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI
 {
     public class PlayerLocationText : LabelComponent, IHUDComponent
     {

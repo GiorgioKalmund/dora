@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UCGUI;
 using UnityEngine;
 
-namespace giorgiokalmund.Dora
+namespace giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI
 {
     public interface IHUDComponent
     {

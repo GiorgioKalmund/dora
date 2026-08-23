@@ -21,16 +21,21 @@ namespace giorgiokalmund.Dora.Questing
         [field: ReadOnly]
         public bool IsCompleted { get; protected set; }
 
-        /// Whether it is possible for the requirements to be achieved.
-        public bool CanBeAchieved => HandleValidation().IsSuccess;
+        /// <summary>
+        /// Whether it is possible for the requirements to be achieved during edit time.
+        /// </summary>
+        public bool CanBeAchievedAtEditTime => HandleValidation(false).IsSuccess;
+        
+        /// <summary>
+        /// Whether it is possible for the requirements to be achieved during runtime.
+        /// </summary>
+        public bool CanBeAchievedAtRuntime => HandleValidation(true).IsSuccess;
 
         public bool CanBeCompleted => CheckCompletion() && !IsCompleted;
-
         #endregion
 
         #region Events
 
-        // TODO: Maybe make event such that += is enforced and no children call invoke it directly and are instead forced to call Complete();
         [NotNull] internal UnityEvent OnComplete = new ();
         [NotNull] internal UnityEvent OnUpdated = new ();
 
@@ -45,16 +50,16 @@ namespace giorgiokalmund.Dora.Questing
         /// Should return a new <see cref="QuestValidationInformation.Failure"/> if something has gone wrong,
         /// else a <see cref="QuestValidationInformation.Success"/>.
         /// </returns>
-        [NotNull] protected abstract QuestValidationInformation HandleValidation();
+        [NotNull] protected abstract QuestValidationInformation HandleValidation(bool isRuntime);
 
         /// <summary>
         /// Validates the internals using <see cref="HandleValidation"/> if internal static validation is not skipped (<see cref="SkipValidation"/>).
         /// </summary>
         /// <returns></returns>
-        [NotNull] internal QuestValidationInformation Validate()
+        [NotNull] internal QuestValidationInformation Validate(bool isRuntime)
         {
             if (!SkipValidation)
-                return HandleValidation();
+                return HandleValidation(isRuntime);
             return QuestValidationInformation.Success();
         }
         
@@ -187,16 +192,16 @@ namespace giorgiokalmund.Dora.Questing
         /// Attempts to process an incoming <see cref="IGameplayEvent"/> if it can be processed (<see cref="CanProcess"/>).
         /// </summary>
         /// <param name="e">The incoming <see cref="IGameplayEvent"/>.</param>
-        internal void Process(IGameplayEvent e)
+        internal bool Process(IGameplayEvent e)
         {
             if (IsCompleted)
             {
                 DoraLogger.LogWarning($"The quest step '{name}' has received a '{e.GetType().Name}' event even though it is already marked as completed.");
-                return;
+                return false;
             }
-            
-            if (CanProcess(e))
-                ProcessEvent(e);
+
+            // rely on short-circuit evaluation!
+            return CanProcess(e) && ProcessEvent(e);
         }
 
         /// <summary>
@@ -209,7 +214,7 @@ namespace giorgiokalmund.Dora.Questing
         /// Processes any <see cref="IGameplayEvent"/> which has passed the <see cref="CanProcess"/> check.
         /// </summary>
         /// <param name="e">The incoming <see cref="IGameplayEvent"/></param>.
-        protected abstract void ProcessEvent(IGameplayEvent e);
+        protected abstract bool ProcessEvent(IGameplayEvent e);
 
         #endregion
 

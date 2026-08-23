@@ -10,26 +10,26 @@ namespace giorgiokalmund.Dora.Questing
     public static class QuestValidator
     {
         [CanBeNull]
-        public static string Validate(Quest quest)
+        public static string Validate(Quest quest, bool isRuntime)
         {
-            var result = quest.Validate();
+            var result = quest.Validate(isRuntime);
             if (result is QuestValidationFailure failure)
                 return LogFailure(quest, failure);
             return null;
         }
         
         [CanBeNull]
-        public static string ValidateQuestSteps(Quest quest)
+        public static string ValidateQuestSteps(Quest quest, bool isRuntime)
         {
-            var result = quest.ValidateQuestSteps();
+            var result = quest.ValidateQuestSteps(isRuntime);
             if (result is QuestValidationFailure failure)
                 return LogFailure(quest, failure, "steps");
             return null;
         }
         
-        public static string[] ValidateAllQuestSteps(Quest quest)
+        public static string[] ValidateAllQuestSteps(Quest quest, bool isRuntime)
         {
-            var results = quest.ValidateAllQuestSteps();
+            var results = quest.ValidateAllQuestSteps(isRuntime);
             List<string> failureMessages = new List<string>(results.Length);
             
             foreach (var result in results)

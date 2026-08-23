@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Quest_LocationStep_AB
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Questing.Quest
   <IsBotched>k__BackingField: 0
-  <State>k__BackingField: 0
+  <State>k__BackingField: 4
   <Information>k__BackingField:
     identifier: ab
     <Title>k__BackingField: Quest_LocationStep_AB

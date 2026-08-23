@@ -49,7 +49,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         public int CurrentPathIdx => currentState.pathIndex;
         private string CurrentPathID => path[currentState.pathIndex];
         
-        protected override QuestValidationInformation HandleValidation()
+        protected override QuestValidationInformation HandleValidation(bool isRuntime)
         {
             if (!spaceFoundationData)
                 return QuestValidationInformation.Failure("No SpaceFoundation Data!");
@@ -110,7 +110,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
             return currentState.pathIndex >= path.Length;
         }
 
-        protected override void ProcessEvent(IGameplayEvent e, ref State state)
+        protected override bool ProcessEvent(IGameplayEvent e, ref State state)
         {
             EnteredLocationEvent entered = (EnteredLocationEvent)e;
             if (entered.Location.Equals(CurrentPathID))
@@ -119,8 +119,13 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                 if (!TryComplete())
                 {
                     Update();
+                    return false;
                 }
+                
+                return true;
             }
+
+            return false;
         }
 
         public override void ResetState()

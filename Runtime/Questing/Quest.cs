@@ -120,7 +120,7 @@ namespace giorgiokalmund.Dora.Questing
 
         #region Validation
 
-        public QuestValidationInformation[] ValidateAllQuestSteps()
+        public QuestValidationInformation[] ValidateAllQuestSteps(bool isRuntime)
         {
             if (AllRequirementsToValidate == null)
                 return Array.Empty<QuestValidationInformation>();
@@ -128,7 +128,7 @@ namespace giorgiokalmund.Dora.Questing
             List<QuestValidationInformation> failures = new List<QuestValidationInformation>();
             foreach (var requirement in AllRequirementsToValidate)
             {
-                var result = requirement.Validate();
+                var result = requirement.Validate(isRuntime);
                 if (result.IsFailure)
                     failures.Add(result);
             }
@@ -137,14 +137,14 @@ namespace giorgiokalmund.Dora.Questing
         }
         
         [NotNull]
-        public QuestValidationInformation ValidateQuestSteps()
+        public QuestValidationInformation ValidateQuestSteps(bool isRuntime)
         {
             if (AllRequirementsToValidate == null)
                 return QuestValidationInformation.Failure("There are no steps to validate!");
             
             foreach (var requirement in AllRequirementsToValidate)
             {
-                var result = requirement.Validate();
+                var result = requirement.Validate(isRuntime);
                 if (result.IsFailure)
                     return result;
             }
@@ -153,11 +153,11 @@ namespace giorgiokalmund.Dora.Questing
         }
 
         [NotNull]
-        public QuestValidationInformation Validate()
+        public QuestValidationInformation Validate(bool isRuntime)
         {
             if (BaseStep)
             {
-                var result = BaseStep.Validate();
+                var result = BaseStep.Validate(isRuntime);
                 if (result.IsFailure)
                     return result;
             }
@@ -185,7 +185,7 @@ namespace giorgiokalmund.Dora.Questing
             if (State == QuestState.COMPLETED && completedCount != Steps.Length)
                 return QuestValidationInformation.Failure("The quest is says it is completed but not all of its steps are completed...");
 
-            return ValidateQuestSteps();
+            return ValidateQuestSteps(isRuntime);
         }
 
         internal string[] GetInternalValidationResult()
@@ -204,33 +204,32 @@ namespace giorgiokalmund.Dora.Questing
         #endregion
 
         #region Progress
-
-        // TODO: Maybe have this return a bool as well and then out the new current QuestStep?
-        [CanBeNull]
-        protected AbstractQuestStep NextStep()
+        
+        protected bool TryNextStep(out AbstractQuestStep nextStep)
         {
+            nextStep = null;
             if (IsBotchedOrCompleted)
             {
                 DoraLogger.LogWarning("Cannot move onto next step. Quest botched or already completed.");
-                return null;
+                return false;
             }
 
             if (State != QuestState.ACCEPTED)
             {
                 DoraLogger.LogWarning("Cannot move onto next step. Quest not accepted yet.");
-                return null;
+                return false;
             }
             
             if (Steps == null)
             {
                 DoraLogger.LogWarning($"[{GetType()}]: Cannot advance to next step. There are no steps provided.");
-                return null;
+                return false;
             };
 
             if (currentStepIdx >= Steps.Length)
             {
                 DoraLogger.LogWarning("Cannot move onto next step. No more steps left.");
-                return null;
+                return false;
             }
 
             if (CurrentStep != null)
@@ -242,15 +241,22 @@ namespace giorgiokalmund.Dora.Questing
                     // However, overrides of this method, or control flow changes through inheritance of this class
                     // might change this restricted calling and thus a separate check is required.
                     DoraLogger.LogWarning("Cannot move onto next step. Current step has not been completed yet.");
-                    return null;
+                    return false;
                 }
                 
                 StepCompletedActions();
             }
             
-            SetCurrentStep(currentStepIdx + 1);
-            
-            return CurrentStep;
+            TryAdvanceStepIndex();
+
+            nextStep = CurrentStep;
+            return CurrentStep != null;
+        }
+
+        private void TryAdvanceStepIndex()
+        {
+            // hard stop at length of steps (aka. completion!)
+            SetCurrentStep(Math.Min(currentStepIdx + 1, Steps.Length));
         }
 
         /// <summary>
@@ -495,6 +501,7 @@ namespace giorgiokalmund.Dora.Questing
         {
             onComplete.Invoke(this);
             HandOutRewards();
+            // TODO: -1 should only indicate not started, completed is Steps.Length! CurrentStep logic also needs to change then!
             currentStepIdx = -1;
             
 #if UNITY_EDITOR
@@ -517,7 +524,7 @@ namespace giorgiokalmund.Dora.Questing
                 return;
             }
 
-            if (NextStep() == null)
+            if (!TryNextStep(out _))
             {
                 Assert.IsTrue(State == QuestState.ACCEPTED, $"Quest {Information}: A step was completed but the quest is not in the 'ACCEPTED' state.");
                 TryAdvanceState(); // After accepted, either move on to ACHIEVED if rewards present, else completed

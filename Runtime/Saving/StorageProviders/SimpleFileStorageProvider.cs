@@ -1,7 +1,7 @@
 using System.IO;
 using UnityEngine;
 
-namespace giorgiokalmund.Dora.Saving
+namespace giorgiokalmund.Dora.Saving.StorageProviders
 {
     public abstract class SimpleFileStorageProvider : IStorageProvider
     {

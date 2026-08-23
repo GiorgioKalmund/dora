@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Quest_QuestMarker_123_Rewarded_2
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Questing.Quest
   <IsBotched>k__BackingField: 0
-  <State>k__BackingField: 0
+  <State>k__BackingField: 4
   <Information>k__BackingField:
     identifier: 123_reward_2
     <Title>k__BackingField: Quest_QuestMarker_123_Rewarded_2

@@ -1,7 +1,7 @@
 using giorgiokalmund.Dora.Questing;
 using UnityEngine;
 
-namespace giorgiokalmund.Dora.Testing
+namespace giorgiokalmund.Dora.Samples.Scripts
 {
     [CreateAssetMenu(fileName = "DebugQuestRewards", menuName = "Dora/Rewards/DebugQuestRewards")]
     public class DebugQuestRewards : QuestRewards

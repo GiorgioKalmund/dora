@@ -45,11 +45,10 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         }
         */
 
-        protected override QuestValidationInformation HandleValidation()
+        protected override QuestValidationInformation HandleValidation(bool isRuntime)
         {
-            var result = base.HandleValidation();
-            if (result.IsFailure)
-                return result;
+            if (base.HandleValidation(isRuntime) is QuestValidationFailure failure) 
+                return failure;
 
             var objects = requiredObjects.ToDictionary();
             if (objects != null)

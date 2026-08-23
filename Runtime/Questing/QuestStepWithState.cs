@@ -141,9 +141,9 @@ namespace giorgiokalmund.Dora.Questing
         /// </summary>
         /// <param name="e">The incoming event.</param>
         /// <remarks>See <see cref="AbstractQuestStep.ProcessEvent"/>.</remarks>
-        protected sealed override void ProcessEvent(IGameplayEvent e)
+        protected sealed override bool ProcessEvent(IGameplayEvent e)
         {
-            ProcessEvent(e, ref currentState);
+            return ProcessEvent(e, ref currentState);
         }
 
         /// <summary>
@@ -154,10 +154,7 @@ namespace giorgiokalmund.Dora.Questing
         /// <remarks>Events passed into here are guarded by <see cref="AbstractQuestStep.CanProcess"/>.
         /// This might allow you to make some assumptions in regard to casting to specific event types. </remarks>
         /// <remarks>See <see cref="AbstractQuestStep.ProcessEvent"/>.</remarks>
-        protected virtual void ProcessEvent(IGameplayEvent e, ref T state)
-        {
-            
-        }
+        protected abstract bool ProcessEvent(IGameplayEvent e, ref T state);
 
         #endregion
     }

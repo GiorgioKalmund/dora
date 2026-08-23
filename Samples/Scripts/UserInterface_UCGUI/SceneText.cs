@@ -1,7 +1,7 @@
 using UCGUI;
 using UnityEngine.SceneManagement;
 
-namespace giorgiokalmund.Dora
+namespace giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI
 {
     public class SceneText : LabelComponent, IHUDComponent
     {

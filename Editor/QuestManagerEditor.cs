@@ -22,7 +22,7 @@ namespace giorgiokalmund.Dora.Editor
                 {
                     if (quest == null)
                         return;
-                    var result = quest.Validate();
+                    var result = quest.Validate(Application.isPlaying);
                     if (result.IsFailure)
                         _failedQuests.Add(quest.name);
                 }

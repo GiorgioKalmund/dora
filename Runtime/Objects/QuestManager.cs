@@ -3,7 +3,6 @@ using System.Linq;
 using giorgiokalmund.Dora.Questing;
 using giorgiokalmund.Dora.Questing.Events;
 using giorgiokalmund.Dora.Utils;
-using SpaceFoundationSystem;
 using UnityEngine;
 using UnityEngine.Events;
 using Assert = UnityEngine.Assertions.Assert;
@@ -34,15 +33,9 @@ namespace giorgiokalmund.Dora
         public static GameplayEventBus EventBus => Current?._eventBus;
 
         #endregion
-
-        #region MainActor
-
-        private LocationMember _mainActor;
-
-        #endregion
         
         
-        protected void Awake()
+        protected virtual void Awake()
         {
             if (makeSingleton)
             {
@@ -57,16 +50,15 @@ namespace giorgiokalmund.Dora
             }
             
             _eventBus = new GameplayEventBus();
-            
+        }
+
+        private void OnEnable()
+        {
             // Prepare gameplay hooks early
             foreach (var quest in all.Where(s => s.State == QuestState.ACCEPTED))
-            {
                 Register(quest);
-            }
-            
-            onQuestStateChanged.AddListener(HandleQuestStateChanged);
         }
-        
+
         private void Start()
         {
             if (all == null)
@@ -76,11 +68,16 @@ namespace giorgiokalmund.Dora
             
             foreach (var quest in all)
                 quest.OnQuestManagerInit();
+            
+            onQuestStateChanged.AddListener(HandleQuestStateChanged);
         }
 
         private void OnDestroy()
         {
             onQuestStateChanged.RemoveListener(HandleQuestStateChanged);
+            
+            if (all == null)
+                return;
             
             foreach (var quest in all)
                 quest.OnQuestManagerDeinit();
@@ -95,27 +92,6 @@ namespace giorgiokalmund.Dora
             }
         }
 
-        public void RegisterMainActor(LocationMember locationMember)
-        {
-            _mainActor = locationMember;
-            _mainActor.onLocationChanged.AddListener(HandleMainActorLocationChanged);
-        }
-        
-        public void UnregisterMainActor(LocationMember locationMember)
-        {
-            if (locationMember != _mainActor)
-            {
-                Debug.LogError($"Trying to deinitialize QuestManager with different main actor ('{locationMember.gameObject.name}') than what it was initialized with ('{_mainActor.gameObject.name}')");
-                return;
-            }
-            locationMember.onLocationChanged.RemoveListener(HandleMainActorLocationChanged);
-        }
-
-        private void HandleMainActorLocationChanged(Anchor newLocation)
-        {
-            _eventBus.Publish(new EnteredLocationEvent(newLocation));
-        }
-
         public bool MentionQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.MENTIONED);
 
         public bool StartQuest(Quest quest)
@@ -126,8 +102,12 @@ namespace giorgiokalmund.Dora
             
             Register(quest);
             // TODO: Maybe boolean which checks if we should auto check the location etc on quest start / step start...
-            HandleMainActorLocationChanged(_mainActor.currentLocation);
             return true;
+        }
+
+        protected virtual void OnQuestStarted(Quest quest)
+        {
+            // intentionally left blank
         }
 
         public bool CompleteQuest(Quest quest)

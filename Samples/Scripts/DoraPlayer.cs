@@ -1,17 +1,19 @@
-namespace giorgiokalmund.Dora
+using giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI;
+
+namespace giorgiokalmund.Dora.Samples.Scripts
 {
     public class DoraPlayer : LocationMember
     {
         private void Start()
         {
             HUD.Current.Init(this);
-            QuestManager.Current.RegisterMainActor(this);
+            DoraPlayerManager.Current.RegisterMainActor(this);
         }
 
         private void OnDestroy()
         {
             HUD.Current.Deinit(this);
-            QuestManager.Current.UnregisterMainActor(this);
+            DoraPlayerManager.Current.UnregisterMainActor(this);
         }
     }
 }

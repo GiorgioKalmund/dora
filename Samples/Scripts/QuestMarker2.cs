@@ -3,7 +3,7 @@ using giorgiokalmund.Dora.Questing;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace giorgiokalmund.Dora
+namespace giorgiokalmund.Dora.Samples.Scripts
 {
     public class QuestMarker2 : MonoBehaviour
     {

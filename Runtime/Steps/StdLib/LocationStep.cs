@@ -17,7 +17,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         [SerializeField, Location(nameof(spaceFoundationData)), ShowIf(nameof(HasSfsData))]
         protected string anchor;
 
-        protected override QuestValidationInformation HandleValidation()
+        protected override QuestValidationInformation HandleValidation(bool isRuntime)
         {
             if (!spaceFoundationData)
                 return QuestValidationInformation.Failure("No SpaceFoundation Data!");
@@ -33,14 +33,16 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         protected override bool CanProcess(IGameplayEvent e) => e is EnteredLocationEvent;
 
-        protected override void ProcessEvent(IGameplayEvent e, ref State _)
+        protected override bool ProcessEvent(IGameplayEvent e, ref State _)
         {
             Assert.IsTrue(e is EnteredLocationEvent, $"LocationStep is processing invalid event type: {e.GetType()}");
             EnteredLocationEvent entered = (EnteredLocationEvent)e;
             if (entered.Location.Equals(anchor))
             {
-                TryComplete();
+                return TryComplete();
             }
+
+            return false;
         }
     }
 }
