@@ -36,7 +36,6 @@ namespace giorgiokalmund.Dora.Questing
         /// <remarks>If called during edit-time, will additionally mark the corresponding ScriptableObject as dirty to persistent the changes in the editor.</remarks>
         private void ApplyState(ref T newState)
         {
-            // TODO: Maybe unmanaged resources? / Look more into disposing, should be fine for now for simple state objects
             currentState.Dispose();
             currentState = newState;
             

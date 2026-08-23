@@ -11,10 +11,6 @@ namespace giorgiokalmund.Dora.Saving
         IEquatable<T>,
         ISerializableData where T : struct, ISerializableData
     {
-        bool IEquatable<T>.Equals(T other)
-        {
-            // TODO: Maybe false incorrect!
-            return false;
-        }
+        // Force implementors to handle the equality
     }
 }

@@ -45,9 +45,9 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         }
         */
 
-        protected override QuestValidationInformation HandleValidation(bool isRuntime)
+        protected override ValidationResult HandleValidation(bool isRuntime)
         {
-            if (base.HandleValidation(isRuntime) is QuestValidationFailure failure) 
+            if (base.HandleValidation(isRuntime) is ValidationFailure failure) 
                 return failure;
 
             var objects = requiredObjects.ToDictionary();
@@ -75,19 +75,19 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                         case CountMode.MINIMUM:
                         {
                             if (objectCount < tracker.count)
-                                return QuestValidationInformation.Failure($"Not enough {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
+                                return ValidationResult.Failure($"Not enough {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                         case CountMode.EXACT:
                         {
                             if (objectCount != tracker.count)
-                                return QuestValidationInformation.Failure($"Not exact amount of {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
+                                return ValidationResult.Failure($"Not exact amount of {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                         case CountMode.MAXIMUM:
                         {
                             if (objectCount > tracker.count)
-                                return QuestValidationInformation.Failure($"Too many {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
+                                return ValidationResult.Failure($"Too many {prefab.name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                     }
@@ -101,11 +101,11 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                 foreach ((MonoScript script, CountTracker tracker) in scripts)
                 {
                     if (!script)
-                        return QuestValidationInformation.Failure( "Empty MonoScript entry!");
+                        return ValidationResult.Failure( "Empty MonoScript entry!");
                     
                     var type = script.GetClass();
                     if (type == null || !typeof(Object).IsAssignableFrom(type))
-                        return QuestValidationInformation.Failure( $"MonoScript <b>{script.name}</b> does not inherit from UnityEngine.Object!");
+                        return ValidationResult.Failure( $"MonoScript <b>{script.name}</b> does not inherit from UnityEngine.Object!");
 
                     // TODO: Slow!
                     var instances = FindObjectsByType(type).Where(o => o is MonoBehaviour).OfType<MonoBehaviour>().ToList();
@@ -117,26 +117,26 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                         case CountMode.MINIMUM:
                         {
                             if (objectCount < tracker.count)
-                                return QuestValidationInformation.Failure($"Not enough {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
+                                return ValidationResult.Failure($"Not enough {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                         case CountMode.EXACT:
                         {
                             if (objectCount != tracker.count)
-                                return QuestValidationInformation.Failure($"Not exact amount of {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
+                                return ValidationResult.Failure($"Not exact amount of {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                         case CountMode.MAXIMUM:
                         {
                             if (objectCount > tracker.count)
-                                return QuestValidationInformation.Failure($"Too many {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
+                                return ValidationResult.Failure($"Too many {script.GetClass().Name} present at {SpaceFoundation.Current.GetAnchorName(anchor)} ({anchor}). Expected {tracker.count}, got {objectCount}.");
                             break;
                         }
                     }
                 }
             }
             
-            return QuestValidationInformation.Success();
+            return ValidationResult.Success();
         }
 
         public GenerationPattern GetCurrentPattern()

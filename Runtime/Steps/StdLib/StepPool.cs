@@ -127,10 +127,10 @@ namespace giorgiokalmund.Dora.Steps.StdLib
             }
         }
 
-        protected override QuestValidationInformation HandleValidation(bool isRuntime)
+        protected override ValidationResult HandleValidation(bool isRuntime)
         {
             if (mode == Mode.SPECIFIC && specificStepCount > stepPool.Length)
-                return QuestValidationInformation.Failure( $"<specificStepCount> is too large ({specificStepCount}). Maximum allowed value: {stepPool.Length}");
+                return ValidationResult.Failure( $"<specificStepCount> is too large ({specificStepCount}). Maximum allowed value: {stepPool.Length}");
             
             foreach (var questStep in stepPool)
             {
@@ -139,7 +139,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                     return res;
             }
 
-            return QuestValidationInformation.Success();
+            return ValidationResult.Success();
         }
         
         public override string GetDescription()

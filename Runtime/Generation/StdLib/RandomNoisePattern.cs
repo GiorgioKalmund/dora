@@ -31,7 +31,6 @@ namespace giorgiokalmund.Dora.Generation.StdLib
         [ShowIf("genMode", GenerationMode.ANCHOR)] 
         [Dropdown("AllAnchors")]
         internal Anchor anchor;
-
         private List<Anchor> AllAnchors => SpaceFoundation.Current?.GetAnchors()?.Values.ToList() ?? new List<Anchor>();
         #endregion
 

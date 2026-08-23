@@ -13,7 +13,7 @@ namespace giorgiokalmund.Dora.Questing
         public static string Validate(Quest quest, bool isRuntime)
         {
             var result = quest.Validate(isRuntime);
-            if (result is QuestValidationFailure failure)
+            if (result is ValidationFailure failure)
                 return LogFailure(quest, failure);
             return null;
         }
@@ -22,7 +22,7 @@ namespace giorgiokalmund.Dora.Questing
         public static string ValidateQuestSteps(Quest quest, bool isRuntime)
         {
             var result = quest.ValidateQuestSteps(isRuntime);
-            if (result is QuestValidationFailure failure)
+            if (result is ValidationFailure failure)
                 return LogFailure(quest, failure, "steps");
             return null;
         }
@@ -34,14 +34,14 @@ namespace giorgiokalmund.Dora.Questing
             
             foreach (var result in results)
             {
-                if (result is QuestValidationFailure failure)
+                if (result is ValidationFailure failure)
                     failureMessages.Add(LogFailure(quest, failure, "step"));
             }
 
             return failureMessages.ToArray();
         }
 
-        private static string LogFailure(Quest quest, QuestValidationFailure failure, string context = null)
+        private static string LogFailure(Quest quest, ValidationFailure failure, string context = null)
         {
             string failureString = $"Quest '{quest.Information.Title}' ({quest.Information.identifier}) {context}{(context != null ? " " : "")}cannot be validated: {failure.Reason}";
             DoraLogger.LogError(failureString);

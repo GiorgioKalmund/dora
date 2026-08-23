@@ -36,7 +36,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         {
             public int pathIndex;
 
-            public void Dispose() { }
+           public void Dispose() { }
 
             public bool Equals(State other)
             {
@@ -49,23 +49,23 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         public int CurrentPathIdx => currentState.pathIndex;
         private string CurrentPathID => path[currentState.pathIndex];
         
-        protected override QuestValidationInformation HandleValidation(bool isRuntime)
+        protected override ValidationResult HandleValidation(bool isRuntime)
         {
             if (!spaceFoundationData)
-                return QuestValidationInformation.Failure("No SpaceFoundation Data!");
+                return ValidationResult.Failure("No SpaceFoundation Data!");
 
             _accumulatedDistance = 0;
             string overflowCandidate = null;
             for (var i = 0; i < path.Length; i++)
             {
                 string anchorID = path[i];
-                if (!spaceFoundationData.anchors.Contains(anchorID))
-                    return QuestValidationInformation.Failure($"The anchorID '{anchorID}' is not part of the provided SpaceFoundationData {spaceFoundationData.name}");
+                if (!spaceFoundationData.ContainsAnchor(anchorID))
+                    return ValidationResult.Failure($"The anchorID '{anchorID}' is not part of the provided SpaceFoundationData {spaceFoundationData.name}");
 
                 if (i != path.Length - 1)
                 {
-                    Vector3Int anchorPosDiscretized = spaceFoundationData.anchorToVoxelPositionDict.Get(anchorID);
-                    Vector3Int anchorPosNextDiscretized = spaceFoundationData.anchorToVoxelPositionDict.Get(path[i+1]);
+                    Vector3Int anchorPosDiscretized = spaceFoundationData.GetAnchorVoxelPosition(anchorID);
+                    Vector3Int anchorPosNextDiscretized = spaceFoundationData.GetAnchorVoxelPosition(path[i+1]);
                     
                     _accumulatedDistance += (anchorPosNextDiscretized - anchorPosDiscretized).magnitude;
                     if (hasMaxDistance)
@@ -77,9 +77,9 @@ namespace giorgiokalmund.Dora.Steps.StdLib
             }
             
             if (hasMaxDistance && overflowCandidate != null)
-                return QuestValidationInformation.Failure($"The distance of the path ({_accumulatedDistance}m) is larger than the maximum allowed distance ({maxDistance}m)\nThe first candidate to initialize the overflow was the path segment related to anchorID {overflowCandidate}.");
+                return ValidationResult.Failure($"The distance of the path ({_accumulatedDistance}m) is larger than the maximum allowed distance ({maxDistance}m)\nThe first candidate to initialize the overflow was the path segment related to anchorID {overflowCandidate}.");
             
-            return QuestValidationInformation.Success();
+            return ValidationResult.Success();
         }
         
         public override string GetDescription()

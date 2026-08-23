@@ -47,20 +47,20 @@ namespace giorgiokalmund.Dora.Questing
         /// Returns the static validation result of the quest step.
         /// </summary>
         /// <returns>
-        /// Should return a new <see cref="QuestValidationInformation.Failure"/> if something has gone wrong,
-        /// else a <see cref="QuestValidationInformation.Success"/>.
+        /// Should return a new <see cref="ValidationResult.Failure"/> if something has gone wrong,
+        /// else a <see cref="ValidationResult.Success"/>.
         /// </returns>
-        [NotNull] protected abstract QuestValidationInformation HandleValidation(bool isRuntime);
+        [NotNull] protected abstract ValidationResult HandleValidation(bool isRuntime);
 
         /// <summary>
         /// Validates the internals using <see cref="HandleValidation"/> if internal static validation is not skipped (<see cref="SkipValidation"/>).
         /// </summary>
         /// <returns></returns>
-        [NotNull] internal QuestValidationInformation Validate(bool isRuntime)
+        [NotNull] internal ValidationResult Validate(bool isRuntime)
         {
             if (!SkipValidation)
                 return HandleValidation(isRuntime);
-            return QuestValidationInformation.Success();
+            return ValidationResult.Success();
         }
         
         #endregion

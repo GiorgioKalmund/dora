@@ -37,7 +37,6 @@ namespace giorgiokalmund.Dora.Questing
             }
         }
         
-        // TODO: Probably remove if too generic / useless
         public static Color GetColor(this QuestState state)
         {
             switch (state)

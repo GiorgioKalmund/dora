@@ -17,13 +17,13 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         [SerializeField, Location(nameof(spaceFoundationData)), ShowIf(nameof(HasSfsData))]
         protected string anchor;
 
-        protected override QuestValidationInformation HandleValidation(bool isRuntime)
+        protected override ValidationResult HandleValidation(bool isRuntime)
         {
             if (!spaceFoundationData)
-                return QuestValidationInformation.Failure("No SpaceFoundation Data!");
-            if (!spaceFoundationData.TryGetAnchorSoAIndex(anchor, out _))
-                return QuestValidationInformation.Failure($"The anchorID '{anchor}' is not part of the provided SpaceFoundationData {spaceFoundationData.name}");
-            return QuestValidationInformation.Success();
+                return ValidationResult.Failure("No SpaceFoundation Data!");
+            if (!spaceFoundationData.ContainsAnchor(anchor))
+                return ValidationResult.Failure($"The anchorID '{anchor}' is not part of the provided SpaceFoundationData {spaceFoundationData.name}");
+            return ValidationResult.Success();
         }
 
         public override string GetDescription()

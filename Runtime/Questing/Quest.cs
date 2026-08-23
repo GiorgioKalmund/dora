@@ -120,12 +120,12 @@ namespace giorgiokalmund.Dora.Questing
 
         #region Validation
 
-        public QuestValidationInformation[] ValidateAllQuestSteps(bool isRuntime)
+        public ValidationResult[] ValidateAllQuestSteps(bool isRuntime)
         {
             if (AllRequirementsToValidate == null)
-                return Array.Empty<QuestValidationInformation>();
+                return Array.Empty<ValidationResult>();
             
-            List<QuestValidationInformation> failures = new List<QuestValidationInformation>();
+            List<ValidationResult> failures = new List<ValidationResult>();
             foreach (var requirement in AllRequirementsToValidate)
             {
                 var result = requirement.Validate(isRuntime);
@@ -137,10 +137,10 @@ namespace giorgiokalmund.Dora.Questing
         }
         
         [NotNull]
-        public QuestValidationInformation ValidateQuestSteps(bool isRuntime)
+        public ValidationResult ValidateQuestSteps(bool isRuntime)
         {
             if (AllRequirementsToValidate == null)
-                return QuestValidationInformation.Failure("There are no steps to validate!");
+                return ValidationResult.Failure("There are no steps to validate!");
             
             foreach (var requirement in AllRequirementsToValidate)
             {
@@ -149,11 +149,11 @@ namespace giorgiokalmund.Dora.Questing
                     return result;
             }
 
-            return QuestValidationInformation.Success();
+            return ValidationResult.Success();
         }
 
         [NotNull]
-        public QuestValidationInformation Validate(bool isRuntime)
+        public ValidationResult Validate(bool isRuntime)
         {
             if (BaseStep)
             {
@@ -174,16 +174,16 @@ namespace giorgiokalmund.Dora.Questing
             }
             
             if (currentStepIdx != -1 && State != QuestState.ACCEPTED)
-                return QuestValidationInformation.Failure($"The step index is not what it should be. When not in the 'ACCEPTED' state it should be -1!. Is: {currentStepIdx}.");
+                return ValidationResult.Failure($"The step index is not what it should be. When not in the 'ACCEPTED' state it should be -1!. Is: {currentStepIdx}.");
             
             if (expectedCurrentIndex != currentStepIdx && State == QuestState.ACCEPTED)
-                return QuestValidationInformation.Failure($"Progress has been made to some quest steps but the step index says otherwise (CurrentStepIdx: {currentStepIdx}, Actual Completion Index: {expectedCurrentIndex}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
+                return ValidationResult.Failure($"Progress has been made to some quest steps but the step index says otherwise (CurrentStepIdx: {currentStepIdx}, Actual Completion Index: {expectedCurrentIndex}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
             
             if ((State < QuestState.ACCEPTED || currentStepIdx == 0) && AnyQuestStepCompleted())
-                return QuestValidationInformation.Failure($"Progress has been made to some quest steps but the state says otherwise ({State}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
+                return ValidationResult.Failure($"Progress has been made to some quest steps but the state says otherwise ({State}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
             
             if (State == QuestState.COMPLETED && completedCount != Steps.Length)
-                return QuestValidationInformation.Failure("The quest is says it is completed but not all of its steps are completed...");
+                return ValidationResult.Failure("The quest is says it is completed but not all of its steps are completed...");
 
             return ValidateQuestSteps(isRuntime);
         }
@@ -364,7 +364,6 @@ namespace giorgiokalmund.Dora.Questing
         /// <remarks>For regular, consistent integration with your custom system please refer to <see cref="TrySetState"/>.</remarks>
         private bool SetState(QuestState newState, bool silent = false)
         {
-            // TODO: Check integrity with events
             if (newState == State)
             {
                 //DoraLogger.Log($"Did not set new state. State of {Information} is already in '{State}'!");
@@ -668,7 +667,7 @@ namespace giorgiokalmund.Dora.Questing
                     firstNonCompletion = true;
             }
             
-            
+            // TODO: Consistency / Atomicity -> if a snapshot fails, we still possibly have applied some anyways
             // Re-apply all steps by either grabbing their data from the snapshot,
             // or resetting them with the initial / base state + un-completion
             //
@@ -684,6 +683,8 @@ namespace giorgiokalmund.Dora.Questing
                 else 
                     Steps[i].ResetStep();
             }
+            
+            // TODO: Rollback here if atomicity can not be guaranteed
             
             if (snapshot.state == QuestState.ACCEPTED && State != QuestState.ACCEPTED)
                 // We have to manually start the quest here as it was not registered at this point yet.
