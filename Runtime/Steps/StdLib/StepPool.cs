@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using giorgiokalmund.Dora.Questing;
@@ -81,14 +82,24 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
                 for (var i = 0; i < other.poolSnapshots.Length; i++)
                     if (!other.poolSnapshots[i].Equals(poolSnapshots[i]))
+                    {
+                        Debug.Log($"inequality comes from {other.poolSnapshots[i].serializedData} {other.poolSnapshots[i].isCompleted} vs {poolSnapshots[i].serializedData} {poolSnapshots[i].isCompleted}");
                         return false;
+                    }
 
                 return true;
             }
 
             public override string ToString()
             {
-                return $"pool-{poolSnapshots?.Length}";
+                var sb = new StringBuilder();
+                sb.Append($"({poolSnapshots.Length}):\n");
+                foreach (var questStepSnapshot in poolSnapshots)
+                {
+                    sb.Append("\t" + questStepSnapshot.serializedData + "\n");
+                }
+
+                return sb.ToString();
             }
         }
         
@@ -111,21 +122,55 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         public override ISerializableData GetSerializationState(ISerializationProvider serializer)
         {
+            /* TODO: Compression is possible here as well. We just need to additionally store the index of the corresponding snapshots
+             as pools are completed in an unordered fashion. ModifyAppliedState also needs to take the ordering into account then. */ 
             currentState.poolSnapshots = stepPool.Select(s => s.CreateSnapshot(serializer)).ToArray();
             return currentState;
         }
 
-        public override void ModifyAppliedState(ISerializationProvider serializer, ref State state)
+        public override bool ModifyAppliedState(ISerializationProvider serializer, ref State state)
         {
             if (state.poolSnapshots.Length != stepPool.Length)
             {
                 DoraLogger.LogError($"Invalid lengths. The pool snapshot being applied does not contain the same amount of elements as the current pool!\nSnapshot: {state.poolSnapshots.Length}\tPool: {stepPool.Length}\n");
             }
-            for (var i = 0; i < state.poolSnapshots.Length; i++)
+
+            // Logical equivalent & copy-paste from Quest.cs
+            // See explanation there.
             {
-                stepPool[i].ApplySnapshot(ref state.poolSnapshots[i], serializer);
+                // TODO: If compressing, the rollback buffer will be dynamically sized instead, as not all pools are stored in the data 
+                QuestStepSnapshot[] rollbackBuffer = new QuestStepSnapshot[stepPool.Length];
+                int rollbackIndex = -1;
+            
+                for (var i = 0; i < state.poolSnapshots.Length; i++)
+                {
+                    rollbackBuffer[i] = stepPool[i].CreateSnapshot(serializer);
+
+                    if (!stepPool[i].ApplySnapshot(ref state.poolSnapshots[i], serializer))
+                    {
+                        rollbackIndex = i;
+                        break;
+                    };
+                }
+            
+                if (rollbackIndex != -1)
+                {
+                    // For the steps which require a rollback, we roll them back. 
+                    for (var i = 0; i < rollbackBuffer.Length; i++)
+                    {
+                        stepPool[i].ApplySnapshot(ref rollbackBuffer[i], serializer);
+                    }
+                
+                    // Indicate failure
+                    return false;
+                }
+
+                // No issues when applying --> no rollback, signal success
+                return true;
             }
         }
+        
+        
 
         protected override ValidationResult HandleValidation(bool isRuntime)
         {

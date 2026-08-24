@@ -10,14 +10,32 @@ namespace giorgiokalmund.Dora.Saving.SerializationProviders
             return JsonUtility.ToJson(data);
         }
 
-        public T DeserializeData<T>(string source) where T : struct, ISerializableData
+        public bool DeserializeData<T>(string source, out T result) where T : struct, ISerializableData
         {
-            return JsonUtility.FromJson<T>(source);
+            result = new T();
+            try
+            {
+                result = JsonUtility.FromJson<T>(source);
+                return true;
+            }
+            catch (ArgumentException e)
+            {
+                DoraLogger.LogError(e.Message);
+                return false;
+            }
         }
 
         public object DeserializeData(string source, Type type)
         {
-            return JsonUtility.FromJson(source, type);
+            try
+            {
+                return JsonUtility.FromJson(source, type);
+            }
+            catch (ArgumentException e)
+            {
+                DoraLogger.LogError(e.Message);
+                return null;
+            }
         }
     }
 }

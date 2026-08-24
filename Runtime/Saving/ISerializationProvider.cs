@@ -5,7 +5,7 @@ namespace giorgiokalmund.Dora.Saving
     public interface ISerializationProvider
     {
         public string SerializeData(ISerializableData data);
-        public T DeserializeData<T>(string source) where T : struct, ISerializableData;
+        public bool DeserializeData<T>(string source, out T result) where T : struct, ISerializableData;
         public object DeserializeData(string source, Type type);
     }
 }

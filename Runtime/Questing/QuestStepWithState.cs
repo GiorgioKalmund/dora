@@ -50,8 +50,9 @@ namespace giorgiokalmund.Dora.Questing
         /// </summary>
         /// <param name="serializer">Reference to the serializer being used as part of the serialization process used to deserialize the data.</param>
         /// <param name="state">A reference to the <see cref="currentState"/>. Can be safely modified.</param>
-        public virtual void ModifyAppliedState(ISerializationProvider serializer, ref T state)
+        public virtual bool ModifyAppliedState(ISerializationProvider serializer, ref T state)
         {
+            return true;
             // intentionally left blank
         }
         
@@ -80,7 +81,7 @@ namespace giorgiokalmund.Dora.Questing
         /// </summary>
         /// <param name="snapshot">The snapshot to apply.</param>
         /// <param name="serializer">The serializer used during the deserialization process of this quest step. Can be used to further deserialize nested data.</param>
-        public override void ApplySnapshot(ref QuestStepSnapshot snapshot, ISerializationProvider serializer)
+        public override bool ApplySnapshot(ref QuestStepSnapshot snapshot, ISerializationProvider serializer)
         {
             var newState = serializer.DeserializeData(snapshot.serializedData , typeof(T));
             //Debug.Log($"{ToString()} :\nIncoming:\t{newState}\nCurrent:\t{currentState}\t\n==> {newState.Equals(currentState)}\n(({IsCompleted}) -> ({snapshot.isCompleted}))==> {snapshot.isCompleted == IsCompleted}");
@@ -88,33 +89,45 @@ namespace giorgiokalmund.Dora.Questing
             // check incoming state is actually of the desired type
             if (newState is not T actualNewState)
             {
-                DoraLogger.LogError($"{GetType()} has received invalid state object!\nExpected: <b>{typeof(T)}</b>\nGot: <b>{newState.GetType()}</b>\nDid you load an invalid save for the quest or quest step?");
-                return;
+                DoraLogger.LogError($"{GetType()} has received invalid state object!\nExpected: <b>{typeof(T)}</b>\nGot: <b>{(newState != null ? $"{newState.GetType()}" : "<i>null</i>")}</b>\nDid you load an invalid save for the quest or quest step?");
+                return false;
             }
             
-            // check for inconsistency in completion states
-            if (!newState.Equals(currentState) && snapshot.isCompleted == IsCompleted)
+            // If both true, we expect the states to be equal as well.
+            if (snapshot.isCompleted && IsCompleted)
             {
-                DoraLogger.LogWarning($"Attempted to apply completed snapshot to completed step ('{name}') but the states differ!\n<i>Current State:</i>{currentState}\n<i>Snapshot State:/i>{newState}");
-                return;
-            }
-            
-            // if all caught up, simply return
-            if (newState.Equals(currentState) && snapshot.isCompleted == IsCompleted)
-            {
-                //DoraLogger.Log($"State {GetType().Name} of step {name} is already all caught up. Nothing to apply.");
-                return;
-            }
+                bool equalStates = currentState.Equals(newState);
+                
+                // check for inconsistency in completion states
+                if (!equalStates)
+                {
+                    DoraLogger.LogWarning($"Attempted to apply completed snapshot to completed step ('{name}') but the completion states differ!\n<i>Current State:</i>{currentState}\n<i>Snapshot State:</i>{newState}");
+                    return false;
+                }
 
+                // if all caught up, simply return
+                return true;
+            }
+            
             ApplyState(ref actualNewState);
-            ModifyAppliedState(serializer, ref currentState);
+            if (!ModifyAppliedState(serializer, ref currentState))
+            {
+                DoraLogger.LogError($"[{name}]: Could not correctly modify the state. Error during application of snapshot.");
+                return false;
+            }
 
             // Early return because after applying the new state the step has completed itself and 'IsCompleted' has updated.
+            // 
+            // If both false, no need to complete, or set it again.
+            // If both true, all completion logic has already been done as part of the application of the new state.
             //
             // This is for example possible when the incoming state completes a child in a pool which then completed the pool.
             // If so no need for another TryComplete down below as it will have already been fired.
             if (snapshot.isCompleted == IsCompleted)
-                return;
+            {
+                Update();
+                return true;
+            }
             
             // TODO: Here if we roll back to a state in a quest which is completed (for example rolling back to a location we are currently in)
             // TODO (cont): we might want to perform an additional check / force someone to fire an additional event?
@@ -123,13 +136,14 @@ namespace giorgiokalmund.Dora.Questing
             if (snapshot.isCompleted)
             {
                 // IsCompleted is set internally, do not change manually here
-                TryComplete(); 
+                // 
+                // Return the result here, as if failure, we have an issue as the snapshot indicated that we should be completed!
+                return TryComplete(); 
             }
-            else
-            {
-                Update();
-                IsCompleted = snapshot.isCompleted; // always 'false', just for control flow legibility
-            }
+            
+            Update();
+            IsCompleted = snapshot.isCompleted; // always 'false', just for control flow legibility
+            return true;
         }
         
         #endregion

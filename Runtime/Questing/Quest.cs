@@ -666,8 +666,16 @@ namespace giorgiokalmund.Dora.Questing
                 if (!snapshotStepSnapshot.isCompleted)
                     firstNonCompletion = true;
             }
+
+            // To ensure Atomicity and Consistency, we roll back and abort on failure of any application of a snapshot
+            // When applying new states, we first store the original state, if application fails, we roll back to the one stored in here.
+            // If no errors occur, we simply discard. This method therefore does duplicate (worst case) the required memory, however it is only temporary as
+            // it will be freed when the scope of this function ends. 
+            //
+            // The snapshots here should always be a sequential mirror of the state of the steps. With the last snapshot being the one of the 
+            QuestStepSnapshot[] rollbackBuffer = new QuestStepSnapshot[Steps.Length];
+            int rollbackIndex = -1;
             
-            // TODO: Consistency / Atomicity -> if a snapshot fails, we still possibly have applied some anyways
             // Re-apply all steps by either grabbing their data from the snapshot,
             // or resetting them with the initial / base state + un-completion
             //
@@ -678,22 +686,46 @@ namespace giorgiokalmund.Dora.Questing
             {
                 // If part of snapshot, apply snapshot entry
                 if (i < snapshot.stepSnapshots.Length)
+                {
+                    Debug.Log($"added to buffer {i}");
+                    // Collect all snapshots of previous, assumed to be valid (!!!) state. 
+                    rollbackBuffer[i] = Steps[i].CreateSnapshot(serializer);
+                    
                     // TODO: Explore if 'in' or 'ref readonly' (maybe available later Unity versions) as no write should be necessary
-                    Steps[i].ApplySnapshot(ref snapshot.stepSnapshots[i], serializer);
+                    if (!Steps[i].ApplySnapshot(ref snapshot.stepSnapshots[i], serializer))
+                    {
+                        DoraLogger.LogError($"{name} could not apply incoming snapshot at position {i} (0-indexed). Rolling back to state before snapshot (assumed to be valid).\n");
+                        rollbackIndex = i;
+                        break;
+                    };
+                }
                 else 
                     Steps[i].ResetStep();
             }
             
-            // TODO: Rollback here if atomicity can not be guaranteed
+            if (rollbackIndex != -1)
+            {
+                // For the steps which require a rollback, we roll them back. 
+                for (var i = 0; i < rollbackIndex + 1; i++)
+                {
+                    Steps[i].ApplySnapshot(ref rollbackBuffer[i], serializer);
+                }
+                
+                // Early return, as we do not want to apply the rest of the snapshot
+                return;
+            }
+            
+            //
+            // We can assume valid snapshot from here on out, as no steps need to be rolled back, and the validity of the properties has been checked beforehand
+            //
             
             if (snapshot.state == QuestState.ACCEPTED && State != QuestState.ACCEPTED)
-                // We have to manually start the quest here as it was not registered at this point yet.
+                // We have to manually register the quest here as it was not registered at this point yet.
                 Manager?.Register(this);
             
             if (CurrentStep) // CurrentStep only exists if quest hasn't been completed yet. If completed we cannot clean this up as it already was.
                 StepCompletedActions(isReset:true); // First clean up all subscriptions to the current step 
             
-            // TODO: Do we really want to re-emit events here + hand out rewards etc?
             SetState(snapshot.state, true);
             
             SetCurrentStep(snapshot.currentStep); // Then 'start' a new step, whether it is the same or an old one
@@ -726,7 +758,12 @@ namespace giorgiokalmund.Dora.Questing
                 DoraLogger.LogWarning($"Cannot load quest {Information}. No matching entry in storage found for identifier: '{StorageIdentifier}'.");
                 return false;
             }
-            var snapshot = serializer.DeserializeData<QuestSnapshot>(questData);
+            bool success = serializer.DeserializeData<QuestSnapshot>(questData, out var snapshot);
+            if (!success)
+            {
+                DoraLogger.LogError($"Could not properly deserialize the data for '{StorageIdentifier}'. It might be malformatted or corrupted! No action was performed.");
+                return false;
+            }
             ApplySnapshot(ref snapshot, serializer);
             return true;
         }

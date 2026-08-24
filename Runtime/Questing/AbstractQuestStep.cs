@@ -150,7 +150,7 @@ namespace giorgiokalmund.Dora.Questing
         /// <param name="snapshot">The snapshot to apply.</param>
         /// <param name="serializer">The serializer used during the deserialization process of this quest step. Can be used to further deserialize nested data.</param>
         /// <remarks>Left abstract at this point in time as <see cref="QuestStep{T}"/> creates the actual logical foundation for the use of this concept.</remarks>
-        public abstract void ApplySnapshot(ref QuestStepSnapshot snapshot, ISerializationProvider serializer);
+        public abstract bool ApplySnapshot(ref QuestStepSnapshot snapshot, ISerializationProvider serializer);
         
         
         /// <summary>
