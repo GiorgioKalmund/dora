@@ -11,10 +11,11 @@ using UnityEngine;
 
 namespace giorgiokalmund.Dora.Steps.StdLib
 {
-    // TODO BIG @Fix: Rollback etc currently not properly get serialized and applied due to abstraction
     [CreateAssetMenu(fileName = "StepPool", menuName = "Dora/Steps/Pool")]
     public class StepPool : QuestStep<StepPool.State>
     {
+        #region Mode
+
         public enum Mode
         {
             /// <summary>
@@ -30,7 +31,44 @@ namespace giorgiokalmund.Dora.Steps.StdLib
             /// </summary>
             ALL
         }
+        #endregion
+
+        #region PoolMemberSnapshot
+
+        /// <summary>
+        /// Intermediate representation to help identify a snapshot at application time.
+        /// This is required as in a pool steps are completed in an unordered fashion, and thus the snapshots
+        /// stored in the state do not necessarily line up with the steps in the pool.
+        /// </summary>
+        [Serializable]
+        public struct PoolMemberSnapshot : ISerializableData<PoolMemberSnapshot>
+        {
+            public int index;
+            public QuestStepSnapshot stepSnapshot;
+
+            public void Dispose()
+            {
+                stepSnapshot.Dispose();
+            }
+
+            public bool Equals(PoolMemberSnapshot other)
+            {
+                return index == other.index && stepSnapshot.Equals(other.stepSnapshot);
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is PoolMemberSnapshot other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(index, stepSnapshot);
+            }
+        }
         
+
+        #endregion
         
         /// <summary>
         /// The mode the pool is in.
@@ -51,7 +89,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
         [Serializable]
         public struct State : ISerializableData<State>
         {
-            [SerializeField] internal QuestStepSnapshot[] poolSnapshots;
+            [SerializeField] internal PoolMemberSnapshot[] poolSnapshots;
             
             public void Dispose()
             {
@@ -82,10 +120,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
                 for (var i = 0; i < other.poolSnapshots.Length; i++)
                     if (!other.poolSnapshots[i].Equals(poolSnapshots[i]))
-                    {
-                        Debug.Log($"inequality comes from {other.poolSnapshots[i].serializedData} {other.poolSnapshots[i].isCompleted} vs {poolSnapshots[i].serializedData} {poolSnapshots[i].isCompleted}");
                         return false;
-                    }
 
                 return true;
             }
@@ -96,7 +131,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                 sb.Append($"({poolSnapshots.Length}):\n");
                 foreach (var questStepSnapshot in poolSnapshots)
                 {
-                    sb.Append("\t" + questStepSnapshot.serializedData + "\n");
+                    sb.Append("\t" + questStepSnapshot.stepSnapshot.serializedData + "\n");
                 }
 
                 return sb.ToString();
@@ -122,43 +157,58 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         public override ISerializableData GetSerializationState(ISerializationProvider serializer)
         {
-            /* TODO: Compression is possible here as well. We just need to additionally store the index of the corresponding snapshots
-             as pools are completed in an unordered fashion. ModifyAppliedState also needs to take the ordering into account then. */ 
-            currentState.poolSnapshots = stepPool.Select(s => s.CreateSnapshot(serializer)).ToArray();
+            List<PoolMemberSnapshot> snapshots = new List<PoolMemberSnapshot>();
+            for (var i = 0; i < stepPool.Length; i++)
+            {
+                if (stepPool[i].ProgressHasBeenMade())
+                    snapshots.Add(new PoolMemberSnapshot()
+                    {
+                        index = i,
+                        stepSnapshot = stepPool[i].CreateSnapshot(serializer)
+                    });
+                    
+            }
+            
+            currentState.poolSnapshots = snapshots.ToArray();
             return currentState;
         }
 
         public override bool ModifyAppliedState(ISerializationProvider serializer, ref State state)
         {
-            if (state.poolSnapshots.Length != stepPool.Length)
-            {
-                DoraLogger.LogError($"Invalid lengths. The pool snapshot being applied does not contain the same amount of elements as the current pool!\nSnapshot: {state.poolSnapshots.Length}\tPool: {stepPool.Length}\n");
-            }
-
-            // Logical equivalent & copy-paste from Quest.cs
+            // Logical similar to Quest.cs. 
             // See explanation there.
+            // 
+            // However, here we need to additionally remember the index which the belongs to the state data.
             {
-                // TODO: If compressing, the rollback buffer will be dynamically sized instead, as not all pools are stored in the data 
-                QuestStepSnapshot[] rollbackBuffer = new QuestStepSnapshot[stepPool.Length];
-                int rollbackIndex = -1;
+                Dictionary<int, QuestStepSnapshot> rollbackBuffer = new Dictionary<int, QuestStepSnapshot>();
+                bool rollbackNeeded = false;
             
-                for (var i = 0; i < state.poolSnapshots.Length; i++)
+                for (var i = 0; i < stepPool.Length; i++)
                 {
-                    rollbackBuffer[i] = stepPool[i].CreateSnapshot(serializer);
-
-                    if (!stepPool[i].ApplySnapshot(ref state.poolSnapshots[i], serializer))
+                    // TODO: @Performance there might be a better way to store and check this. Essentially O(N^2) :(
+                    // If part of snapshot, apply new snapshot
+                    var targetIndex = Array.FindIndex(state.poolSnapshots, s => s.index == i);
+                    if (targetIndex != -1)
                     {
-                        rollbackIndex = i;
-                        break;
-                    };
+                        rollbackBuffer[i] = stepPool[i].CreateSnapshot(serializer);
+                        if (!stepPool[i].ApplySnapshot(ref state.poolSnapshots[targetIndex].stepSnapshot, serializer))
+                        {
+                            rollbackNeeded = true;
+                            break;
+                        };
+                    }
+                    // else, it should be fully reset (as no state was saved for it). We ensure this by resetting it, as previous snapshots might have changed it.
+                    else
+                        stepPool[i].ResetStep();
                 }
             
-                if (rollbackIndex != -1)
+                if (rollbackNeeded)
                 {
                     // For the steps which require a rollback, we roll them back. 
-                    for (var i = 0; i < rollbackBuffer.Length; i++)
+                    foreach (var (index, rollbackSnapshot) in rollbackBuffer)
                     {
-                        stepPool[i].ApplySnapshot(ref rollbackBuffer[i], serializer);
+                        var s = rollbackSnapshot;
+                        stepPool[index].ApplySnapshot(ref s, serializer);
                     }
                 
                     // Indicate failure

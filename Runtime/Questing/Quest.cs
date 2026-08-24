@@ -436,6 +436,9 @@ namespace giorgiokalmund.Dora.Questing
         /// <remarks>As we always unsubscribe when the step is changed (even to itself), we do not guard the event firing here. On rollback this means that this is re-triggered, even if it's still the same step</remarks>
         private void StepStartedActions()
         {
+            /* TODO: Duplicate subscription if new manager appears (for example if new scene with quest is (re)loaded!)
+              We could either unsubscribe, or simply check if the step is started and do noop. Or even better not even invoke this function in that case.
+            */
             Assert.IsNotNull(CurrentStep, $"Started the step for quest {Information} but the step is somehow null.");
             onStepStarted.Invoke(CurrentStep);
             CurrentStep.OnComplete.AddListener(HandleStepCompleted);

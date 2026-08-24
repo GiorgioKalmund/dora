@@ -41,7 +41,7 @@ namespace giorgiokalmund.Dora.Saving.StorageProviders
             if (!Directory.Exists(dirName))
                 Directory.CreateDirectory(dirName);
             
-            Debug.Log($"savefile written at {combined}");
+            DoraLogger.Log($"[{GetType().Name}] savefile written at {combined}");
             File.WriteAllText(CombinedPath(path), data);
         }
 
@@ -51,7 +51,7 @@ namespace giorgiokalmund.Dora.Saving.StorageProviders
             if (!File.Exists(combined))
                 return null;
             
-            Debug.Log($"savefile loaded at {combined}");
+            DoraLogger.Log($"[{GetType().Name}] savefile loaded at {combined}");
             return File.ReadAllText(combined);
         }
 
