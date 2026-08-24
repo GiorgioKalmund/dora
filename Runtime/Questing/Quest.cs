@@ -687,7 +687,6 @@ namespace giorgiokalmund.Dora.Questing
                 // If part of snapshot, apply snapshot entry
                 if (i < snapshot.stepSnapshots.Length)
                 {
-                    Debug.Log($"added to buffer {i}");
                     // Collect all snapshots of previous, assumed to be valid (!!!) state. 
                     rollbackBuffer[i] = Steps[i].CreateSnapshot(serializer);
                     

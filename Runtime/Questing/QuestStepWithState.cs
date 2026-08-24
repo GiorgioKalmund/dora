@@ -81,6 +81,7 @@ namespace giorgiokalmund.Dora.Questing
         /// </summary>
         /// <param name="snapshot">The snapshot to apply.</param>
         /// <param name="serializer">The serializer used during the deserialization process of this quest step. Can be used to further deserialize nested data.</param>
+        /// <returns>Whether the operation was successful. The operation was NOT successful if an error occurs. If simply no action is performed due to the step being all caught up already, also returns true.</returns>
         public override bool ApplySnapshot(ref QuestStepSnapshot snapshot, ISerializationProvider serializer)
         {
             var newState = serializer.DeserializeData(snapshot.serializedData , typeof(T));
@@ -106,6 +107,12 @@ namespace giorgiokalmund.Dora.Questing
                 }
 
                 // if all caught up, simply return
+                return true;
+            }
+
+            if (!snapshot.isCompleted && !IsCompleted && currentState.Equals(newState))
+            {
+                // all caught up, simply return
                 return true;
             }
             
