@@ -16,6 +16,22 @@ namespace giorgiokalmund.Dora.Questing
     [CreateAssetMenu(fileName = "Quest", menuName = "Dora/Quest", order = 1)]
     public class Quest :  BaseComponent<QuestManager>, IEquatable<Quest>, IComparable<Quest>
     {
+        [Serializable]
+        public struct RewardOption
+        {
+            /// <summary>
+            /// Whether to hand out the rewards early in a separate 'Achieved' state.
+            /// </summary>
+            [Tooltip("Whether to hand out the rewards early in a separate 'Achieved' state.")]
+            public bool handoutOnAchieved;
+            
+            /// <summary>
+            /// The rewards to hand out.
+            /// </summary>
+            [Tooltip("The rewards to hand out.")]
+            public QuestRewards rewards;
+        }
+        
         #region Members & Properties
 
         [field: ReadOnly]
@@ -36,13 +52,8 @@ namespace giorgiokalmund.Dora.Questing
 
         public virtual string StorageIdentifier => Information.identifier;
 
-        [field: SerializeField, Tooltip("Optional initial Requirements for the quest to be met.")]
-        [CanBeNull]
-        public AbstractQuestStep BaseStep { get; protected set; }
-        
         [field: SerializeField, Tooltip("Optional rewards when the quest is completed.")]
-        [CanBeNull]
-        public QuestRewards Rewards { get; protected set; }
+        public RewardOption[] Rewards { get; protected set; }
 
         [field: SerializeField, Tooltip("Individual steps of the quest."), Expandable]
         public AbstractQuestStep[] Steps { get; protected set; }
@@ -155,13 +166,6 @@ namespace giorgiokalmund.Dora.Questing
         [NotNull]
         public ValidationResult Validate(bool isRuntime)
         {
-            if (BaseStep)
-            {
-                var result = BaseStep.Validate(isRuntime);
-                if (result.IsFailure)
-                    return result;
-            }
-
             int expectedCurrentIndex = -1;
             int completedCount = 0;
             for (var i = 0; i < Steps.Length; i++)
@@ -205,7 +209,7 @@ namespace giorgiokalmund.Dora.Questing
 
         #region Progress
         
-        protected bool TryNextStep(out AbstractQuestStep nextStep)
+        public bool TryNextStep(out AbstractQuestStep nextStep)
         {
             nextStep = null;
             if (IsBotchedOrCompleted)
@@ -283,23 +287,18 @@ namespace giorgiokalmund.Dora.Questing
         /// Advances the state based on the restricted flow of the state logic.
         /// </summary>
         /// <returns>Whether the operation was successful.</returns>
-        internal bool TryAdvanceState() => TryAdvanceState(out _);
+        public bool TryAdvanceState() => TryAdvanceState(out _);
         
         /// <summary>
         /// Advances the state based on the restricted flow of the state logic.
         /// </summary>
         /// <param name="newState">The new <see cref="QuestState"/> after a successful operation.</param>
         /// <returns>Whether the operation was successful.</returns>
-        internal bool TryAdvanceState(out QuestState newState)
+        public bool TryAdvanceState(out QuestState newState)
         {
             newState = State;
 
-            // State < QuestState.ACCEPTED ?
-            if (State == QuestState.MENTIONED && (BaseStep && BaseStep.IsCompleted))
-            {
-                DoraLogger.LogWarning($"Cannot advance quest state {Information}. BaseStep is not completed yet.");
-                return false;
-            }
+            // TODO: Check for accepting criteria (i.e. other quests have to be completed first)
 
             var next = State.GetNext();
             if (next.HasValue)
@@ -308,8 +307,12 @@ namespace giorgiokalmund.Dora.Questing
                 return TrySetState(next.Value);
             }
 
-            DoraLogger.LogWarning("no next state :(");
             return false;
+        }
+
+        public bool Complete()
+        {
+            return TrySetState(QuestState.COMPLETED);
         }
 
         /// <summary>
@@ -318,7 +321,7 @@ namespace giorgiokalmund.Dora.Questing
         /// </summary>
         /// <param name="newState">The new state to set.</param>
         /// <returns>Whether setting the state to the new state was successful.</returns>
-        internal bool TrySetState(QuestState newState)
+        public bool TrySetState(QuestState newState)
         {
             if (IsBotched)
             {
@@ -388,8 +391,19 @@ namespace giorgiokalmund.Dora.Questing
                 StepStartedActions();
             }
 
-            if (newState == QuestState.ACHIEVED && Rewards == null)
-                return TryAdvanceState();
+            if (newState == QuestState.ACHIEVED)
+            {
+                // If no reward demands to be handed in the dedicated 'ACHIEVED' state,
+                // we simply move on to the completion state, which will hand out all anyways.
+                if (Rewards == null || !Rewards.Any(r => r.handoutOnAchieved))
+                {
+                    // Should be true, as next state is 'COMPLETED'
+                    Assert.IsTrue(TryAdvanceState());
+                    return true;
+                }
+                
+                AchievedActions(silent);
+            }
 
             if (newState == QuestState.COMPLETED && !silent)
                 CompletedActions();
@@ -414,6 +428,7 @@ namespace giorgiokalmund.Dora.Questing
         }
         
         
+        // TODO: This can probably removed and inlined
         private bool CanBeAchieved()
         {
             if (IsBotchedOrCompleted)
@@ -421,6 +436,9 @@ namespace giorgiokalmund.Dora.Questing
 
             if (Steps == null)
                 return false;
+
+            if (State >= QuestState.ACHIEVED && currentStepIdx == -1)
+                return true;
 
             // Check for equality here as in the final step completion we still call NextStep, which advances the index one last time
             if (currentStepIdx == Steps.Length && (CurrentStep?.IsCompleted ?? true))
@@ -495,6 +513,24 @@ namespace giorgiokalmund.Dora.Questing
 #endif
             onBotch.Invoke(this);
         }
+
+        /*
+         TODO: Is not silent in all cases, as completion leading to achieved is not accounted for when applying a snapshot.
+         When rolling back, Complete() / Achievement should not trigger any events (or, add option to toggle this behaviour)
+         It works if we rollback into achieved from a non-accepted state.
+         */ 
+        private void AchievedActions(bool silent = false)
+        {
+            if (!silent)
+                HandOutAchievedRewards();
+            
+            currentStepIdx = -1;
+            
+#if UNITY_EDITOR
+            // Persist changes when working in the editor!
+            EditorUtility.SetDirty(this);
+#endif
+        }
         
         /// <summary>
         /// Internal actions and events related to completing the quest, such as handing out rewards.
@@ -502,9 +538,7 @@ namespace giorgiokalmund.Dora.Questing
         private void CompletedActions()
         {
             onComplete.Invoke(this);
-            HandOutRewards();
-            // TODO: -1 should only indicate not started, completed is Steps.Length! CurrentStep logic also needs to change then!
-            currentStepIdx = -1;
+            HandOutCompletionRewards();
             
 #if UNITY_EDITOR
             // Persist changes when working in the editor!
@@ -544,10 +578,27 @@ namespace giorgiokalmund.Dora.Questing
 
         #region Rewards
 
-        internal void HandOutRewards()
+        internal void HandOutAchievedRewards()
         {
-            Rewards?.HandOut();
+            if (Rewards == null)
+                return;
+            
+            foreach (var reward in Rewards.Where(r => r.handoutOnAchieved))
+                reward.rewards.HandOut();
         }
+
+        /// <summary>
+        /// Hands out rewards. Will be called on completion of the quest.
+        /// </summary>
+        internal void HandOutCompletionRewards()
+        {
+            if (Rewards == null)
+                return;
+            
+            foreach (var reward in Rewards.Where(r => !r.handoutOnAchieved))
+                reward.rewards.HandOut();
+        }
+        
         #endregion
 
         #region IGameplayEvents

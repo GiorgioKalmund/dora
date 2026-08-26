@@ -13572,18 +13572,6 @@ MonoBehaviour:
       Value: a1978577960
     - Key: {x: -9, y: 21, z: 9}
       Value: a1978577960
-  anchors:
-    entries:
-    - Key: a228339096
-      Value: {fileID: 0}
-    - Key: a1729043030
-      Value: {fileID: 0}
-    - Key: a1041102406
-      Value: {fileID: 0}
-    - Key: a784517577
-      Value: {fileID: 0}
-    - Key: a1978577960
-      Value: {fileID: 0}
   explicitDelimiters:
     entries: []
   implicitDelimiters:
@@ -13592,18 +13580,6 @@ MonoBehaviour:
     entries: []
   anchorIntToStringIdDict:
     entries: []
-  anchorToVoxelPositionDict:
-    entries:
-    - Key: a228339096
-      Value: {x: 2, y: 2, z: 4}
-    - Key: a1729043030
-      Value: {x: 0, y: 2, z: -6}
-    - Key: a1041102406
-      Value: {x: -3, y: 2, z: 4}
-    - Key: a784517577
-      Value: {x: 8, y: 2, z: 4}
-    - Key: a1978577960
-      Value: {x: -8, y: 2, z: 4}
   anchorIdToSoAIndex:
     entries:
     - Key: a1729043030

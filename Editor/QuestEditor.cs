@@ -83,18 +83,9 @@ namespace giorgiokalmund.Dora.Editor
                     quest.Load(new JsonSerializationProvider(), new JsonFileStorageProvider(Application.persistentDataPath));
                 }
                 GUILayout.EndHorizontal();
-
-
-                if (quest.BaseStep)
-                {
-                    EditorGUILayout.Separator();
-                    GUILayout.Label("<b>BASE REQUIREMENT</b>", QuestDrawer.RichText);
-                    if (!quest.BaseStep.CanBeAchievedAtEditTime)
-                        QuestDrawer.RichText.normal.textColor = disabledColor;
-                    GUILayout.Label($"{quest.BaseStep.GetDescription()}", QuestDrawer.RichText);
-                    QuestDrawer.RichText.normal.textColor = defaultColor;
-                }
                 
+                // TODO: Maybe alert if starting requirements not met, but quest has started (invalid state)
+
                 if (quest.Steps?.Length > 0)
                 {
                     EditorGUILayout.Separator();

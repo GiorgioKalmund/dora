@@ -13,14 +13,16 @@ MonoBehaviour:
   m_Name: Quest_LocationStep_AB
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Questing.Quest
   <IsBotched>k__BackingField: 0
-  <State>k__BackingField: 4
+  <State>k__BackingField: 3
   <Information>k__BackingField:
     identifier: ab
     <Title>k__BackingField: Quest_LocationStep_AB
     <Description>k__BackingField: 
-  <BaseStep>k__BackingField: {fileID: 0}
-  <Rewards>k__BackingField: {fileID: 11400000, guid: 337adebaf96f340dd8e00507774d2a39,
-    type: 2}
+  <Rewards>k__BackingField:
+  - handoutOnAchieved: 1
+    rewards: {fileID: 11400000, guid: 337adebaf96f340dd8e00507774d2a39, type: 2}
+  - handoutOnAchieved: 1
+    rewards: {fileID: 11400000, guid: 44876c5e105fa4a80a4ca0000a5ceda5, type: 2}
   <Steps>k__BackingField:
   - {fileID: 11400000, guid: 95ea1c3f924a14d5ea476e77e8750f9f, type: 2}
   - {fileID: 11400000, guid: 1778d66afe44f44c2805fb6b9158a0da, type: 2}
