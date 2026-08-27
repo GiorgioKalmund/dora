@@ -16,7 +16,7 @@ namespace giorgiokalmund.Dora.Samples.Scripts
     {
         [Header("Quest")]
         [SerializeField] private Quest quest;
-        [SerializeField] private MarkerAction stateToAdvance;
+        [SerializeField] private MarkerAction phaseToAdvance;
 
         [Header("World")] 
         [SerializeField] private Collider markerArea;
@@ -26,35 +26,35 @@ namespace giorgiokalmund.Dora.Samples.Scripts
         {
             Assert.IsNotNull(quest, "QuestMarker needs a quest to work!");
             
-            QuestState relatedState = stateToAdvance switch
+            QuestPhase relatedPhase = phaseToAdvance switch
             {
-                MarkerAction.MENTION => QuestState.MENTIONED,
-                MarkerAction.START => QuestState.ACCEPTED,
-                MarkerAction.TRY_COMPLETE => QuestState.COMPLETED,
+                MarkerAction.MENTION => QuestPhase.MENTIONED,
+                MarkerAction.START => QuestPhase.ACCEPTED,
+                MarkerAction.TRY_COMPLETE => QuestPhase.COMPLETED,
                 _ => throw new Exception("Unhandled MarkerAction!")
             };
-            visuals.material.color = relatedState.GetColor();
+            visuals.material.color = relatedPhase.GetColor();
         }
 
         private void OnTriggerEnter(Collider _)
         {
-            switch (stateToAdvance)
+            switch (phaseToAdvance)
             {
                 case MarkerAction.MENTION:
                 {
-                    visuals.material.color = QuestState.MENTIONED.GetColor();
+                    visuals.material.color = QuestPhase.MENTIONED.GetColor();
                     QuestManager.Current.MentionQuest(quest);
                     break;
                 }
                 case MarkerAction.START:
                 {
-                    visuals.material.color = QuestState.ACCEPTED.GetColor();
+                    visuals.material.color = QuestPhase.ACCEPTED.GetColor();
                     QuestManager.Current.StartQuest(quest);
                     break;
                 }
                 case MarkerAction.TRY_COMPLETE:
                 {
-                    visuals.material.color = QuestState.COMPLETED.GetColor();
+                    visuals.material.color = QuestPhase.COMPLETED.GetColor();
                     QuestManager.Current.CompleteQuest(quest);
                     break;
                 }

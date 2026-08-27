@@ -9,7 +9,7 @@ namespace giorgiokalmund.Dora.Samples.Scripts
     {
         [Header("Quest")]
         [SerializeField] private Quest quest;
-        [SerializeField] private MarkerAction stateToMatch;
+        [SerializeField] private MarkerAction phaseToMatch;
 
         [Header("World")] 
         [SerializeField] private Collider markerArea;
@@ -19,28 +19,28 @@ namespace giorgiokalmund.Dora.Samples.Scripts
         {
             Assert.IsNotNull(quest, "QuestMarker needs a quest to work!");
             
-            quest.onStateChanged.AddListener(HandleStateChanged);
-            HandleStateChanged(quest.State);
+            quest.onPhaseChanged.AddListener(HandleStateChanged);
+            HandleStateChanged(quest.Phase);
         }
 
-        private void HandleStateChanged(QuestState state)
+        private void HandleStateChanged(QuestPhase phase)
         {
-            visuals.material.color = StateColor;
+            visuals.material.color = PhaseColor;
         }
 
-        private QuestState ReactionState => stateToMatch switch
+        private QuestPhase ReactionPhase => phaseToMatch switch
         {
-            MarkerAction.MENTION => QuestState.UNKNOWN,
-            MarkerAction.START => QuestState.MENTIONED,
-            MarkerAction.TRY_COMPLETE => QuestState.ACHIEVED,
+            MarkerAction.MENTION => QuestPhase.UNKNOWN,
+            MarkerAction.START => QuestPhase.MENTIONED,
+            MarkerAction.TRY_COMPLETE => QuestPhase.ACHIEVED,
             _ => throw new Exception("Unhandled MarkerAction!")
         };
         
-        private Color StateColor => ReactionState == quest.State ? ReactionState.GetNext()!.Value.GetColor() : Color.gray;
+        private Color PhaseColor => ReactionPhase == quest.Phase ? ReactionPhase.GetNext()!.Value.GetColor() : Color.gray;
 
         private void OnTriggerEnter(Collider _)
         {
-            switch (stateToMatch)
+            switch (phaseToMatch)
             {
                 case MarkerAction.MENTION:
                 {

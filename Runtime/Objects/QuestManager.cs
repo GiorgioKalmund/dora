@@ -15,7 +15,7 @@ namespace giorgiokalmund.Dora
     public class QuestManager : MonoBehaviour, IComponentOwner
     {
         [Header("Events")]
-        public UnityEvent<Quest, QuestState> onQuestStateChanged = new UnityEvent<Quest, QuestState>();
+        public UnityEvent<Quest, QuestPhase> onQuestStateChanged = new UnityEvent<Quest, QuestPhase>();
         
         [Header("Singleton")]
         [SerializeField, Tooltip("Whether to initialize the QuestManager using the Singleton pattern.")]
@@ -55,7 +55,7 @@ namespace giorgiokalmund.Dora
         private void OnEnable()
         {
             // Prepare gameplay hooks early
-            foreach (var quest in all.Where(s => s.State == QuestState.ACCEPTED))
+            foreach (var quest in all.Where(s => s.Phase == QuestPhase.ACCEPTED))
                 Register(quest);
         }
 
@@ -83,20 +83,20 @@ namespace giorgiokalmund.Dora
                 quest.OnQuestManagerDeinit();
         }
         
-        private void HandleQuestStateChanged(Quest quest, QuestState newState)
+        private void HandleQuestStateChanged(Quest quest, QuestPhase newPhase)
         {
             // if a quest has been reset to a non-accepted state via rollback we need to unregister it again manually here
-            if (newState < QuestState.ACCEPTED && _currentlyRegistered.Contains(quest))
+            if (newPhase < QuestPhase.ACCEPTED && _currentlyRegistered.Contains(quest))
             {
                 Unregister(quest);
             }
         }
 
-        public bool MentionQuest(Quest quest) => SetQuestStateInternal(quest, QuestState.MENTIONED);
+        public bool MentionQuest(Quest quest) => SetQuestStateInternal(quest, QuestPhase.MENTIONED);
 
         public bool StartQuest(Quest quest)
         {
-            var success = SetQuestStateInternal(quest, QuestState.ACCEPTED);
+            var success = SetQuestStateInternal(quest, QuestPhase.ACCEPTED);
             if (!success)
                 return false;
             
@@ -112,16 +112,16 @@ namespace giorgiokalmund.Dora
 
         public bool CompleteQuest(Quest quest)
         {
-            var success = SetQuestStateInternal(quest, QuestState.COMPLETED);
+            var success = SetQuestStateInternal(quest, QuestPhase.COMPLETED);
             if (!success)
                 return false;
             // TODO: Maybe more here, else just lambda (like MentionQuest)
             return true;
         } 
         
-        public bool AdvanceQuest(Quest quest) => AdvanceQuestStateInternal(quest);
+        public bool AdvanceQuestPhase(Quest quest) => AdvanceQuestPhaseInternal(quest);
 
-        private bool AdvanceQuestStateInternal(Quest quest)
+        private bool AdvanceQuestPhaseInternal(Quest quest)
         {
             if (!all.Contains(quest))
             {
@@ -130,24 +130,24 @@ namespace giorgiokalmund.Dora
             }
 
             // Explicitly handle start flow
-            if (quest.State == QuestState.MENTIONED)
+            if (quest.Phase == QuestPhase.MENTIONED)
                 return StartQuest(quest);
             
-            if (quest.State == QuestState.ACHIEVED)
+            if (quest.Phase == QuestPhase.ACHIEVED)
                 return CompleteQuest(quest);
             
-            return quest.TryAdvanceState();
+            return quest.TryAdvancePhase();
         }
 
-        private bool SetQuestStateInternal(Quest quest, QuestState state)
+        private bool SetQuestStateInternal(Quest quest, QuestPhase phase)
         {
             if (!all.Contains(quest))
             {
-                DoraLogger.LogError($"Cannot move {quest.Information} to state {state}. Not tracked by this QuestManager.", this);
+                DoraLogger.LogError($"Cannot move {quest.Information} to state {phase}. Not tracked by this QuestManager.", this);
                 return false;
             }
 
-            return quest.TrySetState(state);
+            return quest.TrySetPhase(phase);
         }
         
         public bool BotchQuest(Quest quest)

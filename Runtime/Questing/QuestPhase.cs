@@ -8,7 +8,7 @@ namespace giorgiokalmund.Dora.Questing
     /// <see cref="UNKNOWN"/> -> <see cref="MENTIONED"/> -> <see cref="ACCEPTED"/> -> <see cref="ACHIEVED"/> -> <see cref="COMPLETED"/>
     /// </summary>
     [Serializable] 
-    public enum QuestState
+    public enum QuestPhase
     {
         /// Quest is unknown
         UNKNOWN     = 0,
@@ -22,30 +22,30 @@ namespace giorgiokalmund.Dora.Questing
         COMPLETED   = 4,
     }
 
-    public static class QuestStateHelper
+    public static class QuestPhaseHelper
     {
-        public static QuestState? GetNext(this QuestState state)
+        public static QuestPhase? GetNext(this QuestPhase phase)
         {
-            switch (state)
+            switch (phase)
             {
-                case QuestState.UNKNOWN: return QuestState.MENTIONED;
-                case QuestState.MENTIONED: return QuestState.ACCEPTED;
-                case QuestState.ACCEPTED: return QuestState.ACHIEVED;
-                case QuestState.ACHIEVED: return QuestState.COMPLETED;
-                case QuestState.COMPLETED: return null;
-                default: return QuestState.UNKNOWN;
+                case QuestPhase.UNKNOWN: return QuestPhase.MENTIONED;
+                case QuestPhase.MENTIONED: return QuestPhase.ACCEPTED;
+                case QuestPhase.ACCEPTED: return QuestPhase.ACHIEVED;
+                case QuestPhase.ACHIEVED: return QuestPhase.COMPLETED;
+                case QuestPhase.COMPLETED: return null;
+                default: return QuestPhase.UNKNOWN;
             }
         }
         
-        public static Color GetColor(this QuestState state)
+        public static Color GetColor(this QuestPhase phase)
         {
-            switch (state)
+            switch (phase)
             {
-                case QuestState.UNKNOWN: return Color.gray;
-                case QuestState.MENTIONED: return Color.hotPink;
-                case QuestState.ACCEPTED: return Color.deepSkyBlue;
-                case QuestState.ACHIEVED: return Color.yellow;
-                case QuestState.COMPLETED: return Color.green;
+                case QuestPhase.UNKNOWN: return Color.gray;
+                case QuestPhase.MENTIONED: return Color.hotPink;
+                case QuestPhase.ACCEPTED: return Color.deepSkyBlue;
+                case QuestPhase.ACHIEVED: return Color.yellow;
+                case QuestPhase.COMPLETED: return Color.green;
                 default: return Color.white;
             }
         }

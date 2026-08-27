@@ -10,9 +10,9 @@ namespace giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI
     {
         private Dictionary<Quest, QuestCard> _currentQuests = new();
 
-        private void HandleQuestUpdate(Quest quest, QuestState newState)
+        private void HandleQuestUpdate(Quest quest, QuestPhase newPhase)
         {
-            if (newState == QuestState.UNKNOWN)
+            if (newPhase == QuestPhase.UNKNOWN)
             {
                 if (_currentQuests.Remove(quest, out QuestCard card))
                 {
@@ -43,9 +43,9 @@ namespace giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI
             DisplayName = "Quest Stack";
             Spacing(20);
 
-            foreach (var quest in QuestManager.Current.all.Where(q => q.State != QuestState.UNKNOWN))
+            foreach (var quest in QuestManager.Current.all.Where(q => q.Phase != QuestPhase.UNKNOWN))
             {
-                HandleQuestUpdate(quest, quest.State);
+                HandleQuestUpdate(quest, quest.Phase);
             }
 
             /* TODO: Test fully integrated initialization on startup. 

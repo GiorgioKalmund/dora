@@ -32,12 +32,12 @@ namespace giorgiokalmund.Dora.Editor
                 if (_foldOutStateQuickswap)
                 {
                     GUILayout.BeginHorizontal();
-                    foreach (var questState in EnumUtils.GetAll<QuestState>())
+                    foreach (var questState in EnumUtils.GetAll<QuestPhase>())
                     {
-                        EditorGUI.BeginDisabledGroup(questState.Equals(quest.State));
+                        EditorGUI.BeginDisabledGroup(questState.Equals(quest.Phase));
                         if (GUILayout.Button($"{questState}"))
                         {
-                            quest.TrySetState(questState);
+                            quest.TrySetPhase(questState);
                         }
                         EditorGUI.EndDisabledGroup();
                     }

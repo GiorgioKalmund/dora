@@ -6,7 +6,7 @@ namespace giorgiokalmund.Dora.Saving
     [Serializable]
     public struct QuestSnapshot : ISerializableData
     {
-        public QuestState state;
+        public QuestPhase phase;
         public bool isBotched;
         public int currentStep;
         public QuestStepSnapshot[] stepSnapshots;

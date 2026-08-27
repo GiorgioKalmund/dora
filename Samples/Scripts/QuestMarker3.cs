@@ -17,14 +17,14 @@ namespace giorgiokalmund.Dora.Samples.Scripts
         {
             Assert.IsNotNull(quest, "QuestMarker needs a quest to work!");
             
-            quest.onStateChanged.AddListener(HandleStateChanged);
-            HandleStateChanged(quest.State);
+            quest.onPhaseChanged.AddListener(HandleStateChanged);
+            HandleStateChanged(quest.Phase);
         }
 
-        private void HandleStateChanged(QuestState state)
+        private void HandleStateChanged(QuestPhase phase)
         {
-            var n = state.GetNext();
-            if (n.HasValue && n != QuestState.ACHIEVED)
+            var n = phase.GetNext();
+            if (n.HasValue && n != QuestPhase.ACHIEVED)
                 visuals.material.color = n.Value.GetColor();
             else
                 visuals.material.color = Color.gray;
@@ -32,7 +32,7 @@ namespace giorgiokalmund.Dora.Samples.Scripts
 
         private void OnTriggerEnter(Collider _)
         {
-            QuestManager.Current.AdvanceQuest(quest);
+            QuestManager.Current.AdvanceQuestPhase(quest);
         }
     }
 }

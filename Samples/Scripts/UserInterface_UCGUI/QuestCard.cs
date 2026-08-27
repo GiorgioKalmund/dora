@@ -40,7 +40,7 @@ namespace giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI
         public QuestCard Init(Quest quest)
         {
             _quest = quest;
-            _state.Text(_quest.State.ToString()).Color(_quest.State.GetColor());
+            _state.Text(_quest.Phase.ToString()).Color(_quest.Phase.GetColor());
             _identifier.Text(_quest.Information.identifier);
             _title.Text(_quest.Information.Title);
             _description.Text(_quest.Information.Description);
@@ -50,7 +50,7 @@ namespace giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI
             _quest.onStepStarted.AddListener(HandleNewStep);
             _quest.onStepUpdated.AddListener(HandleStepUpdated);
             _quest.onUpdate.AddListener(UpdateStepCount);
-            _quest.onStateChanged.AddListener(UpdateState);
+            _quest.onPhaseChanged.AddListener(UpdateState);
             _quest.onBotch.AddListener(HandleBotch);
             
             if (_quest.CurrentStep)
@@ -75,17 +75,17 @@ namespace giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI
             _state.Text("<color=red>!!!BOTCHED!!!</color>");
         }
 
-        public void UpdateState(QuestState state)
+        public void UpdateState(QuestPhase phase)
         {
             _state
-                .Text(state.ToString())
-                .Color(state.GetColor());
-            if (state <= QuestState.MENTIONED)
+                .Text(phase.ToString())
+                .Color(phase.GetColor());
+            if (phase <= QuestPhase.MENTIONED)
             {
                 UpdateStepCount(_quest);
                 _currentStep.Text("<i>?Current Step</i>");
             }
-            if (state >= QuestState.ACHIEVED)
+            if (phase >= QuestPhase.ACHIEVED)
                 _currentStep.Text("<i>All Steps Completed</i>");
         }
     }

@@ -40,9 +40,9 @@ namespace giorgiokalmund.Dora.Questing
         
         [field: SerializeField, Tooltip("The state of the quest. Can only move forward. (Unless restarted / reset)")]
         [field: ReadOnly]
-        public QuestState State { get; private set; }
+        public QuestPhase Phase { get; private set; }
 
-        public bool IsCompleted => State == QuestState.COMPLETED;
+        public bool IsCompleted => Phase == QuestPhase.COMPLETED;
 
         /// Whether the quest is botched or completed. This indicated that no operations which affect the quest are possible anymore.
         public bool IsBotchedOrCompleted => IsBotched || IsCompleted;
@@ -73,7 +73,7 @@ namespace giorgiokalmund.Dora.Questing
         {
             get
             {
-                if (State != QuestState.ACCEPTED || currentStepIdx < 0 || currentStepIdx >= Steps.Length)
+                if (Phase != QuestPhase.ACCEPTED || currentStepIdx < 0 || currentStepIdx >= Steps.Length)
                     return null;
                 return Steps[currentStepIdx];
             }
@@ -86,7 +86,7 @@ namespace giorgiokalmund.Dora.Questing
         #region Events
 
         [Header("Quest Events")]
-        public UnityEvent<QuestState> onStateChanged = new ();
+        public UnityEvent<QuestPhase> onPhaseChanged = new ();
         public UnityEvent<Quest> onUpdate = new();
         public UnityEvent<Quest> onComplete = new();
         public UnityEvent<Quest> onBotch = new();
@@ -98,36 +98,6 @@ namespace giorgiokalmund.Dora.Questing
         public UnityEvent<AbstractQuestStep> onStepCompleted = new ();
 
         #endregion
-
-        private void Awake()
-        {
-            Information.Title = name;
-        }
-        
-        /// <summary>
-        /// Reset the quest and all of its steps (using <see cref="AbstractQuestStep.ResetStep"/> and <see cref="AbstractQuestStep.ResetState"/>).
-        /// </summary>
-        /// <remarks>Also works during runtime, all relevant events are emitted.</remarks>
-        internal void ResetQuest()
-        {
-            if (CurrentStep)
-                StepCompletedActions(isReset:true);
-            
-            State = QuestState.UNKNOWN;
-            onStateChanged.Invoke(State);
-            Manager?.onQuestStateChanged?.Invoke(this, State);
-            onReset.Invoke(this);
-            currentStepIdx = -1;
-            IsBotched = false;
-            if (Steps != null)
-                foreach (var questStep in Steps)
-                    questStep.ResetStep();
-            
-#if UNITY_EDITOR
-            // Persist changes when working in the editor!
-            EditorUtility.SetDirty(this);
-#endif
-        }
 
         #region Validation
 
@@ -177,16 +147,16 @@ namespace giorgiokalmund.Dora.Questing
                 }
             }
             
-            if (currentStepIdx != -1 && State != QuestState.ACCEPTED)
+            if (currentStepIdx != -1 && Phase != QuestPhase.ACCEPTED)
                 return ValidationResult.Failure($"The step index is not what it should be. When not in the 'ACCEPTED' state it should be -1!. Is: {currentStepIdx}.");
             
-            if (expectedCurrentIndex != currentStepIdx && State == QuestState.ACCEPTED)
+            if (expectedCurrentIndex != currentStepIdx && Phase == QuestPhase.ACCEPTED)
                 return ValidationResult.Failure($"Progress has been made to some quest steps but the step index says otherwise (CurrentStepIdx: {currentStepIdx}, Actual Completion Index: {expectedCurrentIndex}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
             
-            if ((State < QuestState.ACCEPTED || currentStepIdx == 0) && AnyQuestStepCompleted())
-                return ValidationResult.Failure($"Progress has been made to some quest steps but the state says otherwise ({State}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
+            if ((Phase < QuestPhase.ACCEPTED || currentStepIdx == 0) && AnyQuestStepCompleted())
+                return ValidationResult.Failure($"Progress has been made to some quest steps but the state says otherwise ({Phase}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
             
-            if (State == QuestState.COMPLETED && completedCount != Steps.Length)
+            if (Phase == QuestPhase.COMPLETED && completedCount != Steps.Length)
                 return ValidationResult.Failure("The quest is says it is completed but not all of its steps are completed...");
 
             return ValidateQuestSteps(isRuntime);
@@ -218,7 +188,7 @@ namespace giorgiokalmund.Dora.Questing
                 return false;
             }
 
-            if (State != QuestState.ACCEPTED)
+            if (Phase != QuestPhase.ACCEPTED)
             {
                 DoraLogger.LogWarning("Cannot move onto next step. Quest not accepted yet.");
                 return false;
@@ -284,27 +254,27 @@ namespace giorgiokalmund.Dora.Questing
 
         /// <returns></returns>
         /// <summary>
-        /// Advances the state based on the restricted flow of the state logic.
+        /// Advances the phase based on the restricted flow of the state logic.
         /// </summary>
         /// <returns>Whether the operation was successful.</returns>
-        public bool TryAdvanceState() => TryAdvanceState(out _);
+        public bool TryAdvancePhase() => TryAdvancePhase(out _);
         
         /// <summary>
-        /// Advances the state based on the restricted flow of the state logic.
+        /// Advances the phase based on the restricted flow of the phase logic.
         /// </summary>
-        /// <param name="newState">The new <see cref="QuestState"/> after a successful operation.</param>
+        /// <param name="newPhase">The new <see cref="QuestPhase"/> after a successful operation.</param>
         /// <returns>Whether the operation was successful.</returns>
-        public bool TryAdvanceState(out QuestState newState)
+        public bool TryAdvancePhase(out QuestPhase newPhase)
         {
-            newState = State;
+            newPhase = Phase;
 
             // TODO: Check for accepting criteria (i.e. other quests have to be completed first)
 
-            var next = State.GetNext();
+            var next = Phase.GetNext();
             if (next.HasValue)
             {
-                newState = next.Value;
-                return TrySetState(next.Value);
+                newPhase = next.Value;
+                return TrySetPhase(next.Value);
             }
 
             return false;
@@ -312,71 +282,71 @@ namespace giorgiokalmund.Dora.Questing
 
         public bool Complete()
         {
-            return TrySetState(QuestState.COMPLETED);
+            return TrySetPhase(QuestPhase.COMPLETED);
         }
 
         /// <summary>
-        /// Attempts to set the state via <see cref="SetState"/>.
-        /// The <see cref="newState"/> must come <b>AFTER</b> the current <see cref="State"/>.
+        /// Attempts to set the state via <see cref="SetPhase"/>.
+        /// The <see cref="newPhase"/> must come <b>AFTER</b> the current <see cref="Phase"/>.
         /// </summary>
-        /// <param name="newState">The new state to set.</param>
+        /// <param name="newPhase">The new state to set.</param>
         /// <returns>Whether setting the state to the new state was successful.</returns>
-        public bool TrySetState(QuestState newState)
+        public bool TrySetPhase(QuestPhase newPhase)
         {
             if (IsBotched)
             {
-                DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it is botched.");
+                DoraLogger.LogWarning($"Cannot set {Information} to state '{newPhase}' as it is botched.");
                 return false;
             }
             
             if (IsCompleted)
             {
-                DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it already completed.");
+                DoraLogger.LogWarning($"Cannot set {Information} to state '{newPhase}' as it already completed.");
                 return false;
             }
 
-            int stateComp = newState.CompareTo(State);
-            if (stateComp == 0)
+            int phaseComp = newPhase.CompareTo(Phase);
+            if (phaseComp == 0)
             {
-                DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it is already in that state.");
+                DoraLogger.LogWarning($"Cannot set {Information} to state '{newPhase}' as it is already in that state.");
                 return false;
             }
             
-            if (stateComp < 0)
+            if (phaseComp < 0)
             {
-                DoraLogger.LogError($"Cannot set {Information} to state '{newState}' as it is already in further in state.'{State}'");
+                DoraLogger.LogError($"Cannot set {Information} to state '{newPhase}' as it is already in further in state.'{Phase}'");
                 return false;
             }
 
-            if (newState >= QuestState.ACHIEVED && !CanBeAchieved())
+            if (newPhase >= QuestPhase.ACHIEVED && !CanBeAchieved())
             {
-                DoraLogger.LogWarning($"Cannot set {Information} to state '{newState}' as it cannot be achieved or completed right now.");
+                DoraLogger.LogWarning($"Cannot set {Information} to phase '{newPhase}' as it cannot be achieved or completed right now.");
                 return false;
             }
 
-            return SetState(newState);
+            return SetPhase(newPhase);
         }
 
         /// <summary>
-        /// Almost fully unchecked setting the <see cref="State"/> of the quest.
+        /// Almost fully unchecked setting the <see cref="Phase"/> of the quest.
         /// If it is the same as the current one no action is performed.
         /// </summary>
-        /// <param name="newState">The new state of the quest.</param>
-        /// <param name="silent">Whether to emit related events when setting the new state.</param>
-        /// <returns>If the result of setting a new state was successful.</returns>
-        /// <remarks>For regular, consistent integration with your custom system please refer to <see cref="TrySetState"/>.</remarks>
-        private bool SetState(QuestState newState, bool silent = false)
+        /// <param name="newPhase">The new phase of the quest.</param>
+        /// <param name="silent">Whether to emit related events when setting the new phase.</param>
+        /// <returns>If the result of setting a new phase was successful.</returns>
+        /// <remarks>For regular, consistent integration with your custom system please refer to <see cref="TrySetPhase"/>.</remarks>
+        private bool SetPhase(QuestPhase newPhase, bool silent = false)
         {
-            if (newState == State)
+            if (newPhase == Phase)
             {
                 //DoraLogger.Log($"Did not set new state. State of {Information} is already in '{State}'!");
                 return false;
             }
             
-            State = newState;
+            Phase = newPhase;
             
-            onStateChanged.Invoke(State);
-            Manager?.onQuestStateChanged.Invoke(this, State);
+            onPhaseChanged.Invoke(Phase);
+            Manager?.onQuestStateChanged.Invoke(this, Phase);
             
             // 
             // use 'newState' from here on out for logical legibility, however it would be equivalent to use the updated 'State' variable
@@ -384,28 +354,28 @@ namespace giorgiokalmund.Dora.Questing
 
             // Only re-subscribe if coming from non-accepted state
             // If we already were in ACCEPTED, we handle the re-subscription via StepStartedActions in SetCurrentStep
-            if (newState == QuestState.ACCEPTED && !silent)
+            if (newPhase == QuestPhase.ACCEPTED && !silent)
             {
                 currentStepIdx = 0; // indicate the quest has started
                 Assert.IsNotNull(CurrentStep, $"Started the quest {Information} but the first step is null. This is not allowed! A quest must at least have one step if started during runtime.");
                 StepStartedActions();
             }
 
-            if (newState == QuestState.ACHIEVED)
+            if (newPhase == QuestPhase.ACHIEVED)
             {
                 // If no reward demands to be handed in the dedicated 'ACHIEVED' state,
                 // we simply move on to the completion state, which will hand out all anyways.
                 if (Rewards == null || !Rewards.Any(r => r.handoutOnAchieved))
                 {
                     // Should be true, as next state is 'COMPLETED'
-                    Assert.IsTrue(TryAdvanceState());
+                    Assert.IsTrue(TryAdvancePhase());
                     return true;
                 }
                 
                 AchievedActions(silent);
             }
 
-            if (newState == QuestState.COMPLETED && !silent)
+            if (newPhase == QuestPhase.COMPLETED && !silent)
                 CompletedActions();
             
             
@@ -437,7 +407,7 @@ namespace giorgiokalmund.Dora.Questing
             if (Steps == null)
                 return false;
 
-            if (State >= QuestState.ACHIEVED && currentStepIdx == -1)
+            if (Phase >= QuestPhase.ACHIEVED && currentStepIdx == -1)
                 return true;
 
             // Check for equality here as in the final step completion we still call NextStep, which advances the index one last time
@@ -562,8 +532,8 @@ namespace giorgiokalmund.Dora.Questing
 
             if (!TryNextStep(out _))
             {
-                Assert.IsTrue(State == QuestState.ACCEPTED, $"Quest {Information}: A step was completed but the quest is not in the 'ACCEPTED' state.");
-                TryAdvanceState(); // After accepted, either move on to ACHIEVED if rewards present, else completed
+                Assert.IsTrue(Phase == QuestPhase.ACCEPTED, $"Quest {Information}: A step was completed but the quest is not in the 'ACCEPTED' state.");
+                TryAdvancePhase(); // After accepted, either move on to ACHIEVED if rewards present, else completed
             }
         }
         
@@ -655,9 +625,9 @@ namespace giorgiokalmund.Dora.Questing
         public QuestSnapshot CreateSnapshot(ISerializationProvider serializer)
         {
             int count;
-            if (State >= QuestState.ACHIEVED) // capture all steps if achieved or completed
+            if (Phase >= QuestPhase.ACHIEVED) // capture all steps if achieved or completed
                 count = Steps.Length;
-            else if (State == QuestState.ACCEPTED) // capture only necessary if accepted
+            else if (Phase == QuestPhase.ACCEPTED) // capture only necessary if accepted
                 count = currentStepIdx + 1;
             else count = 0; // capture none otherwise
             
@@ -673,7 +643,7 @@ namespace giorgiokalmund.Dora.Questing
             return new QuestSnapshot()
             {
                 currentStep = currentStepIdx,
-                state = State,
+                phase = Phase,
                 isBotched = IsBotched,
                 stepSnapshots = snapshots
             };
@@ -685,7 +655,7 @@ namespace giorgiokalmund.Dora.Questing
             // Pre-verify some integrity of the snapshot
             //
             
-            if (snapshot.state > QuestState.COMPLETED)
+            if (snapshot.phase > QuestPhase.COMPLETED)
             {
                 DoraLogger.LogError("Error applying snapshot: Invalid state!");
                 return;
@@ -697,7 +667,7 @@ namespace giorgiokalmund.Dora.Questing
                 return;
             }
             
-            if (snapshot.currentStep >= Steps.Length && snapshot.state != QuestState.COMPLETED)
+            if (snapshot.currentStep >= Steps.Length && snapshot.phase != QuestPhase.COMPLETED)
             {
                 DoraLogger.LogError("Error applying snapshot: Invalid current step!");
                 return;
@@ -772,14 +742,14 @@ namespace giorgiokalmund.Dora.Questing
             // We can assume valid snapshot from here on out, as no steps need to be rolled back, and the validity of the properties has been checked beforehand
             //
             
-            if (snapshot.state == QuestState.ACCEPTED && State != QuestState.ACCEPTED)
+            if (snapshot.phase == QuestPhase.ACCEPTED && Phase != QuestPhase.ACCEPTED)
                 // We have to manually register the quest here as it was not registered at this point yet.
                 Manager?.Register(this);
             
             if (CurrentStep) // CurrentStep only exists if quest hasn't been completed yet. If completed we cannot clean this up as it already was.
                 StepCompletedActions(isReset:true); // First clean up all subscriptions to the current step 
             
-            SetState(snapshot.state, true);
+            SetPhase(snapshot.phase, true);
             
             SetCurrentStep(snapshot.currentStep); // Then 'start' a new step, whether it is the same or an old one
             
@@ -824,6 +794,36 @@ namespace giorgiokalmund.Dora.Questing
         #endregion
         
         #region Lifecycle Integration
+        
+        private void Awake()
+        {
+            Information.Title = name;
+        }
+        
+        /// <summary>
+        /// Reset the quest and all of its steps (using <see cref="AbstractQuestStep.ResetStep"/> and <see cref="AbstractQuestStep.ResetState"/>).
+        /// </summary>
+        /// <remarks>Also works during runtime, all relevant events are emitted.</remarks>
+        internal void ResetQuest()
+        {
+            if (CurrentStep)
+                StepCompletedActions(isReset:true);
+            
+            Phase = QuestPhase.UNKNOWN;
+            onPhaseChanged.Invoke(Phase);
+            Manager?.onQuestStateChanged?.Invoke(this, Phase);
+            onReset.Invoke(this);
+            currentStepIdx = -1;
+            IsBotched = false;
+            if (Steps != null)
+                foreach (var questStep in Steps)
+                    questStep.ResetStep();
+            
+#if UNITY_EDITOR
+            // Persist changes when working in the editor!
+            EditorUtility.SetDirty(this);
+#endif
+        }
 
         /// <summary>
         /// Callback invoked during the <b>Start</b> phase of the <see cref="QuestManager"/>'s lifecycle.
