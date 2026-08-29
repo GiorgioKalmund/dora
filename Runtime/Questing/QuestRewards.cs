@@ -7,5 +7,6 @@ namespace giorgiokalmund.Dora.Questing
     public abstract class QuestRewards : ScriptableObject
     {
         public abstract void HandOut();
+        public abstract void Retract();
     }
 }

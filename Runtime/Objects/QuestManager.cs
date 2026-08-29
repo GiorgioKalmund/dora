@@ -184,7 +184,7 @@ namespace giorgiokalmund.Dora
             Assert.IsNotNull(_eventBus, "QuestManager should have an event bus!");
             _eventBus.OnPublished.AddListener(quest.Process);
             
-            quest.onComplete.AddListener(Unregister);
+            quest.onAchieved.AddListener(Unregister);
             quest.onReset.AddListener(Unregister);
             quest.onBotch.AddListener(Unregister);
             
@@ -203,7 +203,7 @@ namespace giorgiokalmund.Dora
             
             quest.onBotch.RemoveListener(Unregister);
             quest.onReset.RemoveListener(Unregister);
-            quest.onComplete.RemoveListener(Unregister);
+            quest.onAchieved.RemoveListener(Unregister);
             
             Assert.IsNotNull(_eventBus, "QuestManager should have an event bus!");
             _eventBus.OnPublished.RemoveListener(quest.Process);

@@ -10,5 +10,10 @@ namespace giorgiokalmund.Dora.Samples.Scripts
         {
             DoraLogger.Log($"{name} (2) has handed out rewards!");
         }
+
+        public override void Retract()
+        {
+            DoraLogger.Log($"{name} (2) has retracted their rewards!");
+        }
     }
 }

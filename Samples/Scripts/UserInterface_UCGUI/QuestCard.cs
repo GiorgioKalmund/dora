@@ -45,7 +45,7 @@ namespace giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI
             _title.Text(_quest.Information.Title);
             _description.Text(_quest.Information.Description);
             _currentStep.Text(_quest.CurrentStep?.ToString());
-            _questStepCount.Text($"{_quest.CurrentStepIdx}/{_quest.Steps.Length}");
+            UpdateStepCount(quest);
 
             _quest.onStepStarted.AddListener(HandleNewStep);
             _quest.onStepUpdated.AddListener(HandleStepUpdated);
@@ -67,7 +67,8 @@ namespace giorgiokalmund.Dora.Samples.Scripts.UserInterface_UCGUI
 
         private void UpdateStepCount(Quest quest)
         {
-            _questStepCount.Text($"{quest.CurrentStepIdx}/{quest.Steps.Length}");
+            (int curr, int total) = quest.GetStepProgress();
+            _questStepCount.Text($"{curr}/{total}");
         }
 
         private void HandleBotch(Quest quest)

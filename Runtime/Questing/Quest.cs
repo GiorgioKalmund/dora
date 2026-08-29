@@ -88,6 +88,7 @@ namespace giorgiokalmund.Dora.Questing
         [Header("Quest Events")]
         public UnityEvent<QuestPhase> onPhaseChanged = new ();
         public UnityEvent<Quest> onUpdate = new();
+        public UnityEvent<Quest> onAchieved = new();
         public UnityEvent<Quest> onComplete = new();
         public UnityEvent<Quest> onBotch = new();
         public UnityEvent<Quest> onReset = new();
@@ -178,6 +179,27 @@ namespace giorgiokalmund.Dora.Questing
         #endregion
 
         #region Progress
+
+        /// <summary>
+        /// Returns the index / count of the current step, as well as the total amount of steps.
+        /// Does <b>NOT</b> represent the correct logical index of the quest (see <see cref="CurrentStepIdx"/> for that).
+        /// </summary>
+        /// <remarks>The main use case of this function is for user-facing elements.</remarks>
+        /// <example>
+        /// Quest is Unknown / Mentioned -> (0, [X]);<br></br>
+        /// Quest is Accepted -> ([IDX], [X]);<br></br>
+        /// Quest is Achieved / Completed -> ([X], [X]);
+        /// </example>
+        public (int current, int total) GetStepProgress()
+        {
+            int currentStepVisual = Phase switch
+            {
+                < QuestPhase.ACCEPTED => 0,
+                QuestPhase.ACCEPTED => currentStepIdx,
+                > QuestPhase.ACCEPTED => Steps.Length
+            };
+            return (currentStepVisual, Steps.Length);
+        }
         
         public bool TryNextStep(out AbstractQuestStep nextStep)
         {
@@ -342,7 +364,8 @@ namespace giorgiokalmund.Dora.Questing
                 //DoraLogger.Log($"Did not set new state. State of {Information} is already in '{State}'!");
                 return false;
             }
-            
+
+            QuestPhase oldPhase = Phase;
             Phase = newPhase;
             
             onPhaseChanged.Invoke(Phase);
@@ -354,11 +377,19 @@ namespace giorgiokalmund.Dora.Questing
 
             // Only re-subscribe if coming from non-accepted state
             // If we already were in ACCEPTED, we handle the re-subscription via StepStartedActions in SetCurrentStep
-            if (newPhase == QuestPhase.ACCEPTED && !silent)
+            if (newPhase == QuestPhase.ACCEPTED)
             {
-                currentStepIdx = 0; // indicate the quest has started
-                Assert.IsNotNull(CurrentStep, $"Started the quest {Information} but the first step is null. This is not allowed! A quest must at least have one step if started during runtime.");
-                StepStartedActions();
+                if (!silent) 
+                {
+                    currentStepIdx = 0; // indicate the quest has started
+                    Assert.IsNotNull(CurrentStep, $"Started the quest {Information} but the first step is null. This is not allowed! A quest must at least have one step if started during runtime.");
+                    StepStartedActions();
+                }
+                
+                if (oldPhase == QuestPhase.COMPLETED) // Coming from completed
+                    RetractCompletionRewards();
+                if (oldPhase >= QuestPhase.ACCEPTED) // Coming from achieved or completed
+                    RetractAchievedRewards();
             }
 
             if (newPhase == QuestPhase.ACHIEVED)
@@ -372,11 +403,20 @@ namespace giorgiokalmund.Dora.Questing
                     return true;
                 }
                 
-                AchievedActions(silent);
+                if (oldPhase < QuestPhase.ACHIEVED) // coming from anything below achieved
+                    AchievedActions();
+                else if (oldPhase > QuestPhase.ACHIEVED) // coming from completed
+                    RetractCompletionRewards();
             }
 
-            if (newPhase == QuestPhase.COMPLETED && !silent)
+            if (newPhase == QuestPhase.COMPLETED)
+            {
                 CompletedActions();
+                
+                if (oldPhase != QuestPhase.ACHIEVED) // if we skip over "achieved" (i.e. on rollback) , we still need to hand out achieved rewards
+                    HandOutAchievedRewards();
+                HandOutCompletionRewards();
+            }
             
             
 #if UNITY_EDITOR
@@ -488,12 +528,13 @@ namespace giorgiokalmund.Dora.Questing
          TODO: Is not silent in all cases, as completion leading to achieved is not accounted for when applying a snapshot.
          When rolling back, Complete() / Achievement should not trigger any events (or, add option to toggle this behaviour)
          It works if we rollback into achieved from a non-accepted state.
+         ----- INTEGRATE RECTRACT!! ------, then no need for silent
          */ 
-        private void AchievedActions(bool silent = false)
+        private void AchievedActions()
         {
-            if (!silent)
-                HandOutAchievedRewards();
+            onAchieved.Invoke(this);
             
+            HandOutAchievedRewards();
             currentStepIdx = -1;
             
 #if UNITY_EDITOR
@@ -508,7 +549,6 @@ namespace giorgiokalmund.Dora.Questing
         private void CompletedActions()
         {
             onComplete.Invoke(this);
-            HandOutCompletionRewards();
             
 #if UNITY_EDITOR
             // Persist changes when working in the editor!
@@ -556,10 +596,16 @@ namespace giorgiokalmund.Dora.Questing
             foreach (var reward in Rewards.Where(r => r.handoutOnAchieved))
                 reward.rewards.HandOut();
         }
+        
+        internal void RetractAchievedRewards()
+        {
+            if (Rewards == null)
+                return;
+            
+            foreach (var reward in Rewards.Where(r => r.handoutOnAchieved))
+                reward.rewards.Retract();
+        }
 
-        /// <summary>
-        /// Hands out rewards. Will be called on completion of the quest.
-        /// </summary>
         internal void HandOutCompletionRewards()
         {
             if (Rewards == null)
@@ -567,6 +613,15 @@ namespace giorgiokalmund.Dora.Questing
             
             foreach (var reward in Rewards.Where(r => !r.handoutOnAchieved))
                 reward.rewards.HandOut();
+        }
+        
+        internal void RetractCompletionRewards()
+        {
+            if (Rewards == null)
+                return;
+            
+            foreach (var reward in Rewards.Where(r => !r.handoutOnAchieved))
+                reward.rewards.Retract();
         }
         
         #endregion
