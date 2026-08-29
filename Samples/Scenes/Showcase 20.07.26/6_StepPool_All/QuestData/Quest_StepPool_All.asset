@@ -13,20 +13,23 @@ MonoBehaviour:
   m_Name: Quest_StepPool_All
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Questing.Quest
   <IsBotched>k__BackingField: 0
-  <State>k__BackingField: 4
+  <Phase>k__BackingField: 0
   <Information>k__BackingField:
     identifier: pool-all
     <Title>k__BackingField: Quest_StepPool_All
     <Description>k__BackingField: 
-  <BaseStep>k__BackingField: {fileID: 0}
-  <Rewards>k__BackingField: {fileID: 0}
+  parent: {fileID: 0}
+  <Rewards>k__BackingField: []
   <Steps>k__BackingField:
   - {fileID: 11400000, guid: 66dcd82590cfb4d9f896dd50a4d281d3, type: 2}
   currentStepIdx: -1
-  onStateChanged:
+  onPhaseChanged:
     m_PersistentCalls:
       m_Calls: []
   onUpdate:
+    m_PersistentCalls:
+      m_Calls: []
+  onAchieved:
     m_PersistentCalls:
       m_Calls: []
   onComplete:

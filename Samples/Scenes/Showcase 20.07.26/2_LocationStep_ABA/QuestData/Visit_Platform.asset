@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Visit_Platform
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Steps.StdLib.LocationStep
   <SkipValidation>k__BackingField: 0
-  <IsCompleted>k__BackingField: 1
+  <IsCompleted>k__BackingField: 0
   spaceFoundationData: {fileID: 11400000, guid: f4ac6ee941f374325ac7bf3e10811889,
     type: 2}
   anchor: a447280620

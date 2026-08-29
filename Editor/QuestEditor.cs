@@ -84,8 +84,6 @@ namespace giorgiokalmund.Dora.Editor
                 }
                 GUILayout.EndHorizontal();
                 
-                // TODO: Maybe alert if starting requirements not met, but quest has started (invalid state)
-
                 if (quest.Steps?.Length > 0)
                 {
                     EditorGUILayout.Separator();

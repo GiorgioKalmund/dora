@@ -16,26 +16,11 @@ namespace giorgiokalmund.Dora.Questing
     [CreateAssetMenu(fileName = "Quest", menuName = "Dora/Quest", order = 1)]
     public class Quest :  BaseComponent<QuestManager>, IEquatable<Quest>, IComparable<Quest>
     {
-        [Serializable]
-        public struct RewardOption
-        {
-            /// <summary>
-            /// Whether to hand out the rewards early in a separate 'Achieved' state.
-            /// </summary>
-            [Tooltip("Whether to hand out the rewards early in a separate 'Achieved' state.")]
-            public bool handoutOnAchieved;
-            
-            /// <summary>
-            /// The rewards to hand out.
-            /// </summary>
-            [Tooltip("The rewards to hand out.")]
-            public QuestRewards rewards;
-        }
-        
         #region Members & Properties
 
         [field: ReadOnly]
         [field: SerializeField, Tooltip("Cannot be recovered or completed. Can be set during every state except if already <see cref=\"QuestState.COMPLETED\"/>.")]
+        [field: Header("Core")]
         public bool IsBotched { get; protected set; }
         
         [field: SerializeField, Tooltip("The state of the quest. Can only move forward. (Unless restarted / reset)")]
@@ -66,6 +51,13 @@ namespace giorgiokalmund.Dora.Questing
 
         /// <inheritdoc cref="currentStepIdx"> </inheritdoc>
         public int CurrentStepIdx => currentStepIdx;
+        
+        [Header("Parent")]
+        [Tooltip("The parent of the quest. If provided, Mentioning or Accepting a quest and a parent is given, it has to be Completed first!")]
+        [SerializeField] private Quest parent;
+        
+        [Tooltip("Which action to perform if the parent is completed.")]
+        [SerializeField] private ParentCompletionAction onParentCompleted = ParentCompletionAction.NONE;
         
         
         [CanBeNull]
@@ -147,6 +139,14 @@ namespace giorgiokalmund.Dora.Questing
                     completedCount++;
                 }
             }
+
+            (Quest dependent1, Quest dependent2) = HasCircularDependency(new HashSet<Quest>() { this });
+            Assert.IsTrue((dependent1 == null) == (dependent2 == null), "HasCircularDependency returned in invalid result!");
+            if (dependent1 != null)
+                return ValidationResult.Failure($"Has a circular dependency somewhere in connection with {dependent1.name} and {dependent2.name}.");
+
+            if (parent && !parent.IsCompleted && (AnyProgress() || Phase != QuestPhase.UNKNOWN))
+                return ValidationResult.Failure($"The parent quest ('{parent.name}') has not been completed yet. However, progress has been by either not being in 'UNKNOWN' phase, or a step having made progress already.");
             
             if (currentStepIdx != -1 && Phase != QuestPhase.ACCEPTED)
                 return ValidationResult.Failure($"The step index is not what it should be. When not in the 'ACCEPTED' state it should be -1!. Is: {currentStepIdx}.");
@@ -154,7 +154,7 @@ namespace giorgiokalmund.Dora.Questing
             if (expectedCurrentIndex != currentStepIdx && Phase == QuestPhase.ACCEPTED)
                 return ValidationResult.Failure($"Progress has been made to some quest steps but the step index says otherwise (CurrentStepIdx: {currentStepIdx}, Actual Completion Index: {expectedCurrentIndex}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
             
-            if ((Phase < QuestPhase.ACCEPTED || currentStepIdx == 0) && AnyQuestStepCompleted())
+            if ((Phase < QuestPhase.ACCEPTED || currentStepIdx == 0) && AnyProgress())
                 return ValidationResult.Failure($"Progress has been made to some quest steps but the state says otherwise ({Phase}). This indicates some form of corruption or inconsistency. Please either resolve the issue manually or reset the quest.");
             
             if (Phase == QuestPhase.COMPLETED && completedCount != Steps.Length)
@@ -162,6 +162,37 @@ namespace giorgiokalmund.Dora.Questing
 
             return ValidateQuestSteps(isRuntime);
         }
+
+        #region Tree Structure
+
+        /// <summary>
+        /// Used to determine whether the quest is at the root of a quest hierarchy.
+        /// </summary>
+        public bool IsRoot()
+        {
+            return parent == null;
+        }
+
+
+        /// <summary>
+        /// Used to determine whether the hierarchy the quest is a part of contains a circular dependency.
+        /// </summary>
+        /// <remarks>
+        /// These circles can be of any size, thus we must simply track the tree using 'seen' set.
+        /// If a parent is already part of the set, we know there has to be a cycle somewhere in the graph.
+        /// </remarks>
+        public virtual (Quest, Quest) HasCircularDependency(HashSet<Quest> seen)
+        {
+            if (IsRoot())
+                return (null, null);
+            if (seen.Contains(parent))
+                return (this, parent);
+
+            seen.Add(this);
+            return parent.HasCircularDependency(seen);
+        }
+
+        #endregion
 
         internal string[] GetInternalValidationResult()
         {
@@ -290,8 +321,6 @@ namespace giorgiokalmund.Dora.Questing
         {
             newPhase = Phase;
 
-            // TODO: Check for accepting criteria (i.e. other quests have to be completed first)
-
             var next = Phase.GetNext();
             if (next.HasValue)
             {
@@ -340,6 +369,13 @@ namespace giorgiokalmund.Dora.Questing
                 return false;
             }
 
+            // if we have a parent, ensure it is completed first!
+            if (newPhase >= QuestPhase.MENTIONED && (!parent?.IsCompleted ?? false))
+            {
+                DoraLogger.LogWarning($"Cannot set {Information} to phase '{newPhase}' as its parent {parent.Information} is not completed.");
+                return false;
+            }
+
             if (newPhase >= QuestPhase.ACHIEVED && !CanBeAchieved())
             {
                 DoraLogger.LogWarning($"Cannot set {Information} to phase '{newPhase}' as it cannot be achieved or completed right now.");
@@ -384,6 +420,7 @@ namespace giorgiokalmund.Dora.Questing
                     currentStepIdx = 0; // indicate the quest has started
                     Assert.IsNotNull(CurrentStep, $"Started the quest {Information} but the first step is null. This is not allowed! A quest must at least have one step if started during runtime.");
                     StepStartedActions();
+                    Manager?.Register(this);
                 }
                 
                 if (oldPhase == QuestPhase.COMPLETED) // Coming from completed
@@ -394,6 +431,14 @@ namespace giorgiokalmund.Dora.Questing
 
             if (newPhase == QuestPhase.ACHIEVED)
             {
+                if (oldPhase < QuestPhase.ACHIEVED) // coming from anything below achieved
+                    AchievedActions();
+                else if (oldPhase > QuestPhase.ACHIEVED) // coming from completed
+                {
+                    RetractCompletionRewards();
+                    return true;
+                } 
+                
                 // If no reward demands to be handed in the dedicated 'ACHIEVED' state,
                 // we simply move on to the completion state, which will hand out all anyways.
                 if (Rewards == null || !Rewards.Any(r => r.handoutOnAchieved))
@@ -402,11 +447,6 @@ namespace giorgiokalmund.Dora.Questing
                     Assert.IsTrue(TryAdvancePhase());
                     return true;
                 }
-                
-                if (oldPhase < QuestPhase.ACHIEVED) // coming from anything below achieved
-                    AchievedActions();
-                else if (oldPhase > QuestPhase.ACHIEVED) // coming from completed
-                    RetractCompletionRewards();
             }
 
             if (newPhase == QuestPhase.COMPLETED)
@@ -432,7 +472,7 @@ namespace giorgiokalmund.Dora.Questing
         /// <summary>
         /// Whether any quest step has already been completed.
         /// </summary>
-        public bool AnyQuestStepCompleted()
+        public bool AnyProgress()
         {
             return Steps.Any(s => s.ProgressHasBeenMade());
         }
@@ -524,18 +564,12 @@ namespace giorgiokalmund.Dora.Questing
             onBotch.Invoke(this);
         }
 
-        /*
-         TODO: Is not silent in all cases, as completion leading to achieved is not accounted for when applying a snapshot.
-         When rolling back, Complete() / Achievement should not trigger any events (or, add option to toggle this behaviour)
-         It works if we rollback into achieved from a non-accepted state.
-         ----- INTEGRATE RECTRACT!! ------, then no need for silent
-         */ 
         private void AchievedActions()
         {
             onAchieved.Invoke(this);
             
             HandOutAchievedRewards();
-            currentStepIdx = -1;
+            SetCurrentStep(-1);
             
 #if UNITY_EDITOR
             // Persist changes when working in the editor!
@@ -594,7 +628,7 @@ namespace giorgiokalmund.Dora.Questing
                 return;
             
             foreach (var reward in Rewards.Where(r => r.handoutOnAchieved))
-                reward.rewards.HandOut();
+                reward.rewards?.HandOut();
         }
         
         internal void RetractAchievedRewards()
@@ -603,7 +637,7 @@ namespace giorgiokalmund.Dora.Questing
                 return;
             
             foreach (var reward in Rewards.Where(r => r.handoutOnAchieved))
-                reward.rewards.Retract();
+                reward.rewards?.Retract();
         }
 
         internal void HandOutCompletionRewards()
@@ -634,7 +668,8 @@ namespace giorgiokalmund.Dora.Questing
                 CurrentStep.Process(e);
             else
             {
-                Debug.Log("no step can process the incoming event");
+                // TODO: This case should not happen!
+                //Debug.Log("no step can process the incoming event");
             }
         }
 
@@ -880,6 +915,21 @@ namespace giorgiokalmund.Dora.Questing
 #endif
         }
 
+        protected virtual void OnParentCompleted(Quest p)
+        {
+            Assert.IsNotNull(parent, $"The parent completion callback was triggered, but {Information} does not have a parent!");
+            Assert.IsTrue(p.Equals(parent), $"The parent completion callback was triggered for {Information}, but the parent which triggered the completion ({p.Information}) is not the parent ({parent.Information})!");
+            
+            if (onParentCompleted == ParentCompletionAction.MENTION)
+                TrySetPhase(QuestPhase.MENTIONED);
+            else if (onParentCompleted == ParentCompletionAction.ACCEPT)
+                TrySetPhase(QuestPhase.ACCEPTED);
+            else
+                DoraLogger.LogWarning("Unhandled case for parent completion logic!");
+            
+            parent.onComplete.RemoveListener(OnParentCompleted);
+        }
+
         /// <summary>
         /// Callback invoked during the <b>Start</b> phase of the <see cref="QuestManager"/>'s lifecycle.
         /// </summary>
@@ -887,6 +937,15 @@ namespace giorgiokalmund.Dora.Questing
         {
             foreach (var questStep in Steps)
                 questStep.OnQuestManagerInit();
+
+            if (parent)
+            {
+                if (onParentCompleted != ParentCompletionAction.NONE)
+                    parent.onComplete.AddListener(OnParentCompleted);
+            }
+            
+            if (Phase == QuestPhase.ACCEPTED)
+                Manager?.Register(this);
             
             // Init the quest before starting & prepare for gameplay
             if (CurrentStep != null)

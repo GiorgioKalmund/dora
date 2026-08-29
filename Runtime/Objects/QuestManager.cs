@@ -52,13 +52,6 @@ namespace giorgiokalmund.Dora
             _eventBus = new GameplayEventBus();
         }
 
-        private void OnEnable()
-        {
-            // Prepare gameplay hooks early
-            foreach (var quest in all.Where(s => s.Phase == QuestPhase.ACCEPTED))
-                Register(quest);
-        }
-
         private void Start()
         {
             if (all == null)
@@ -94,30 +87,9 @@ namespace giorgiokalmund.Dora
 
         public bool MentionQuest(Quest quest) => SetQuestStateInternal(quest, QuestPhase.MENTIONED);
 
-        public bool StartQuest(Quest quest)
-        {
-            var success = SetQuestStateInternal(quest, QuestPhase.ACCEPTED);
-            if (!success)
-                return false;
-            
-            Register(quest);
-            // TODO: Maybe boolean which checks if we should auto check the location etc on quest start / step start...
-            return true;
-        }
+        public bool StartQuest(Quest quest) => SetQuestStateInternal(quest, QuestPhase.ACCEPTED);
 
-        protected virtual void OnQuestStarted(Quest quest)
-        {
-            // intentionally left blank
-        }
-
-        public bool CompleteQuest(Quest quest)
-        {
-            var success = SetQuestStateInternal(quest, QuestPhase.COMPLETED);
-            if (!success)
-                return false;
-            // TODO: Maybe more here, else just lambda (like MentionQuest)
-            return true;
-        } 
+        public bool CompleteQuest(Quest quest) => SetQuestStateInternal(quest, QuestPhase.COMPLETED);
         
         public bool AdvanceQuestPhase(Quest quest) => AdvanceQuestPhaseInternal(quest);
 

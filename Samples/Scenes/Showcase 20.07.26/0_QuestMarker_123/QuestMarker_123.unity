@@ -218,6 +218,11 @@ PrefabInstance:
         type: 2}
     - target: {fileID: 1166865821340791663, guid: 202803860ac4f4841b321d2173425b87,
         type: 3}
+      propertyPath: phaseToMatch
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1166865821340791663, guid: 202803860ac4f4841b321d2173425b87,
+        type: 3}
       propertyPath: stateToMatch
       value: 2
       objectReference: {fileID: 0}
@@ -3753,6 +3758,11 @@ PrefabInstance:
         type: 2}
     - target: {fileID: 1560889350210958193, guid: 513d07c87c26c45d3a3724f1a44aff60,
         type: 3}
+      propertyPath: phaseToAdvance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1560889350210958193, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
       propertyPath: stateToAdvance
       value: 1
       objectReference: {fileID: 0}
@@ -4051,7 +4061,6 @@ MonoBehaviour:
   overrideExistingData: 1
   autoUpdateDataEntries: 1
   data: {fileID: 11400000, guid: f4ac6ee941f374325ac7bf3e10811889, type: 2}
-  chunkMainData: {fileID: 0}
   cacheRuntimePositions: 0
   voxelSize: 1
   chunkSize: 16
@@ -4844,6 +4853,11 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: adeb3c07f3d774392b3ec390bece661d,
         type: 2}
+    - target: {fileID: 1560889350210958193, guid: 513d07c87c26c45d3a3724f1a44aff60,
+        type: 3}
+      propertyPath: phaseToAdvance
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 1560889350210958193, guid: 513d07c87c26c45d3a3724f1a44aff60,
         type: 3}
       propertyPath: stateToAdvance
@@ -16264,6 +16278,11 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: d33b79d718af745c486dd4a39f8ac83b,
         type: 2}
+    - target: {fileID: 1166865821340791663, guid: 202803860ac4f4841b321d2173425b87,
+        type: 3}
+      propertyPath: phaseToMatch
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1166865821340791663, guid: 202803860ac4f4841b321d2173425b87,
         type: 3}
       propertyPath: stateToMatch

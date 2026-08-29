@@ -13,21 +13,26 @@ MonoBehaviour:
   m_Name: Quest_QuestMarker_123_Rewarded
   m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Questing.Quest
   <IsBotched>k__BackingField: 0
-  <State>k__BackingField: 0
+  <Phase>k__BackingField: 0
   <Information>k__BackingField:
     identifier: 123_reward
     <Title>k__BackingField: Quest_QuestMarker_123_Rewarded
     <Description>k__BackingField: 
-  <BaseStep>k__BackingField: {fileID: 0}
-  <Rewards>k__BackingField: {fileID: 11400000, guid: 337adebaf96f340dd8e00507774d2a39,
-    type: 2}
+  <Rewards>k__BackingField:
+  - handoutOnAchieved: 0
+    rewards: {fileID: 11400000, guid: 44876c5e105fa4a80a4ca0000a5ceda5, type: 2}
   <Steps>k__BackingField:
   - {fileID: 11400000, guid: 22e512cfeb71c4f829aa1a5739da8131, type: 2}
   currentStepIdx: -1
-  onStateChanged:
+  parent: {fileID: 11400000, guid: d33b79d718af745c486dd4a39f8ac83b, type: 2}
+  onParentCompleted: 2
+  onPhaseChanged:
     m_PersistentCalls:
       m_Calls: []
   onUpdate:
+    m_PersistentCalls:
+      m_Calls: []
+  onAchieved:
     m_PersistentCalls:
       m_Calls: []
   onComplete:
