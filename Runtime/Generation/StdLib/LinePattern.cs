@@ -16,7 +16,7 @@ namespace giorgiokalmund.Dora.Generation.StdLib
         internal Transform latestHandle1;
         internal Transform latestHandle2;
         
-        private int ObjectsPerSegment => GenerationPool.ToDictionary().Values.Sum();
+        private int ObjectsPerSegment => generationPool.ToDictionary().Values.Sum();
         
         protected override Vector3 GetNextPosition()
         {

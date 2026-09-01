@@ -9,20 +9,20 @@ namespace giorgiokalmund.Dora.Generation
 {
     public abstract class BulkObjectPattern : GenerationPattern
     {
-        [field: SerializeField, Tooltip("")]
-        public SerializableDictionary<GameObject, int> GenerationPool;
+        [field: SerializeField, Tooltip("The pool of objects to generate")]
+        public SerializableDictionary<GameObject, int> generationPool;
 
         [field: SerializeField, Tooltip("Holds the reference to the ids of generated items. ")]
         [field: ReadOnly]
         public List<string> GeneratedIds { get; protected set; }
         
-        protected Dictionary<string, GenerationMember> Generated = new Dictionary<string, GenerationMember>();
+        protected readonly Dictionary<string, GenerationMember> Generated = new Dictionary<string, GenerationMember>();
         
         public override void Generate()
         {
             if (ShouldClearOnGenerate)
                 Clear();
-            var dict = GenerationPool.ToDictionary();
+            var dict = generationPool.ToDictionary();
             if (dict.Keys.Count == 0 || !CanGenerate())
                 return;
             foreach (var monoBehaviour in dict.Keys)

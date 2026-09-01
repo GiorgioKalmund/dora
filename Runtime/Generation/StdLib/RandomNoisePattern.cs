@@ -5,10 +5,6 @@ using SpaceFoundationSystem;
 using UnityEngine;
 using Space = SpaceFoundationSystem.Space;
 
-#if UNITY_EDITOR
-using NaughtyAttributes.Editor;
-#endif
-
 namespace giorgiokalmund.Dora.Generation.StdLib
 {
     public enum GenerationMode
@@ -32,6 +28,8 @@ namespace giorgiokalmund.Dora.Generation.StdLib
         [Dropdown("AllAnchors")]
         internal Anchor anchor;
         private List<Anchor> AllAnchors => SpaceFoundation.Current?.GetAnchors()?.Values.ToList() ?? new List<Anchor>();
+        private Space _correspondingAnchorSpace;
+        private MeshCollider _correspondingAnchorCollider;
         #endregion
 
         #region Collider
@@ -54,7 +52,7 @@ namespace giorgiokalmund.Dora.Generation.StdLib
         #endregion
 
 
-        protected override Vector3 GetNextPosition()
+        protected sealed override Vector3 GetNextPosition()
         {
             switch (genMode)
             {
@@ -62,31 +60,34 @@ namespace giorgiokalmund.Dora.Generation.StdLib
                 {
                     if (anchor)
                     {
-                        // TODO: SubspacePositions is only temporary. No way to access all voxels for an anchor?
-                        // TODO: ElementAt is O(N). Maybe for enough calls we can convert to list once and then sample O(1) 
-                        return anchor.SubspacePositions.ElementAt(Random.Range(0, anchor.SubspacePositions.Count));
+                        if (!_correspondingAnchorSpace || !_correspondingAnchorSpace.anchor.Equals(anchor))
+                        {
+                            _correspondingAnchorSpace = FindObjectsByType<Space>().FirstOrDefault(s => s.anchor.Equals(anchor));
+                            if (!_correspondingAnchorSpace)
+                            {
+                                DoraLogger.LogError($"[{GetType().Name}] The corresponding space to the anchor '{anchor.name}' could not be found!");
+                                break;
+                            }
+                            
+                            _correspondingAnchorCollider = _correspondingAnchorSpace.GetComponent<MeshCollider>();
+                            if (!_correspondingAnchorCollider)
+                            {
+                                DoraLogger.LogError($"[{GetType().Name}] The corresponding space to the anchor '{anchor.name}' does not have a mesh collider! It should have one, as the SFS pass generates one.");
+                                break;
+                            }
+                        }
+
+                        return GetAlgorithmicPosition(_correspondingAnchorCollider, anchor);
                     }
                     
-                    DoraLogger.LogWarning("No location provided!");
+                    DoraLogger.LogError($"[{GetType().Name}] No location provided when!");
                     break;
                 }
                 case GenerationMode.COLLIDER:
                 {
                     if (GenerateInstance())
                     {
-                        // TODO: Rejection sampling not optimal
-                        var bounds = _customCollider.bounds;
-                        var margin = 1f;
-                        Vector3 randomPoint;
-                        do
-                        {
-                            randomPoint = new Vector3(
-                                Random.Range(bounds.min.x + margin, bounds.max.x - margin),
-                                bounds.center.y,
-                                Random.Range(bounds.min.z + margin, bounds.max.z - margin)
-                            );
-                        } while (!IsInside(_customCollider, randomPoint));
-                        return randomPoint;
+                        return GetAlgorithmicPosition(_customCollider);
                     }
                     break;
                 }
@@ -97,6 +98,36 @@ namespace giorgiokalmund.Dora.Generation.StdLib
             }
 
             return Vector3.zero;
+        }
+
+        /// <summary>
+        /// Determines the algorithm to use for sampling a point in a collider.
+        /// Override the base implementation with your own if desired.
+        /// </summary>
+        /// <remarks>Default to simple rejection sampling via <see cref="RejectionSampleInBounds"/>.</remarks>
+        protected virtual Vector3 GetAlgorithmicPosition(Collider collider, Anchor location = null)
+        {
+            // Default to using RejectionSampling
+            return RejectionSampleInBounds(collider.bounds, location);
+        }
+        
+        private Vector3 RejectionSampleInBounds(Bounds bounds, Anchor checkAnchor = null)
+        {
+            Vector3 randomPoint;
+            do
+            {
+                randomPoint = new Vector3(
+                    Random.Range(bounds.min.x, bounds.max.x),
+                    Random.Range(bounds.min.y, bounds.max.y),
+                    Random.Range(bounds.min.z, bounds.max.z)
+                );
+            } while (checkAnchor ? !IsInside(checkAnchor, randomPoint) : !IsInside(_customCollider, randomPoint));
+            return randomPoint;
+        }
+
+        public static bool IsInside(Anchor anchor, Vector3 point)
+        {
+            return anchor.correspondingSpaceFoundation.DetermineLocation(point).Equals(anchor);
         }
         
         public static bool IsInside(Collider col, Vector3 point)

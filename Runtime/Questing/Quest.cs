@@ -310,14 +310,14 @@ namespace giorgiokalmund.Dora.Questing
         /// Advances the phase based on the restricted flow of the state logic.
         /// </summary>
         /// <returns>Whether the operation was successful.</returns>
-        public bool TryAdvancePhase() => TryAdvancePhase(out _);
+        protected internal bool TryAdvancePhase() => TryAdvancePhase(out _);
         
         /// <summary>
         /// Advances the phase based on the restricted flow of the phase logic.
         /// </summary>
         /// <param name="newPhase">The new <see cref="QuestPhase"/> after a successful operation.</param>
         /// <returns>Whether the operation was successful.</returns>
-        public bool TryAdvancePhase(out QuestPhase newPhase)
+        protected internal bool TryAdvancePhase(out QuestPhase newPhase)
         {
             newPhase = Phase;
 
@@ -342,7 +342,7 @@ namespace giorgiokalmund.Dora.Questing
         /// </summary>
         /// <param name="newPhase">The new state to set.</param>
         /// <returns>Whether setting the state to the new state was successful.</returns>
-        public bool TrySetPhase(QuestPhase newPhase)
+        protected internal bool TrySetPhase(QuestPhase newPhase)
         {
             if (IsBotched)
             {
@@ -393,17 +393,16 @@ namespace giorgiokalmund.Dora.Questing
         /// <param name="silent">Whether to emit related events when setting the new phase.</param>
         /// <returns>If the result of setting a new phase was successful.</returns>
         /// <remarks>For regular, consistent integration with your custom system please refer to <see cref="TrySetPhase"/>.</remarks>
-        private bool SetPhase(QuestPhase newPhase, bool silent = false)
+        protected internal bool SetPhase(QuestPhase newPhase, bool silent = false)
         {
-            if (newPhase == Phase)
+            QuestPhase oldPhase = Phase;
+            if (newPhase == oldPhase)
             {
                 //DoraLogger.Log($"Did not set new state. State of {Information} is already in '{State}'!");
                 return false;
             }
 
-            QuestPhase oldPhase = Phase;
             Phase = newPhase;
-            
             onPhaseChanged.Invoke(Phase);
             Manager?.onQuestStateChanged.Invoke(this, Phase);
             
@@ -636,7 +635,8 @@ namespace giorgiokalmund.Dora.Questing
             if (Rewards == null)
                 return;
             
-            foreach (var reward in Rewards.Where(r => r.handoutOnAchieved))
+            // reverse to maintain "stack ordering"
+            foreach (var reward in Rewards.Where(r => r.handoutOnAchieved).Reverse())
                 reward.rewards?.Retract();
         }
 
@@ -654,7 +654,8 @@ namespace giorgiokalmund.Dora.Questing
             if (Rewards == null)
                 return;
             
-            foreach (var reward in Rewards.Where(r => !r.handoutOnAchieved))
+            // reverse to maintain "stack ordering"
+            foreach (var reward in Rewards.Where(r => !r.handoutOnAchieved).Reverse())
                 reward.rewards.Retract();
         }
         

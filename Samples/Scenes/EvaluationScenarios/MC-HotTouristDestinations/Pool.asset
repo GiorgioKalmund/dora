@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be4546d11fab49378071c5feb6d8d82c, type: 3}
+  m_Name: Pool
+  m_EditorClassIdentifier: com.giorgiokalmund.dora::giorgiokalmund.Dora.Steps.StdLib.StepPool
+  <SkipValidation>k__BackingField: 0
+  <IsCompleted>k__BackingField: 1
+  currentState:
+    poolSnapshots:
+    - index: 0
+      stepSnapshot:
+        isCompleted: 1
+        serializedData: '{}'
+    - index: 1
+      stepSnapshot:
+        isCompleted: 1
+        serializedData: '{}'
+    - index: 2
+      stepSnapshot:
+        isCompleted: 1
+        serializedData: '{}'
+    - index: 3
+      stepSnapshot:
+        isCompleted: 1
+        serializedData: '{}'
+    - index: 4
+      stepSnapshot:
+        isCompleted: 1
+        serializedData: '{}'
+  mode: 2
+  consumeEventsOnSuccess: 1
+  specificStepCount: 0
+  stepPool:
+  - {fileID: 11400000, guid: ecf06595ba7c8465c94eca6b7fbc3c16, type: 2}
+  - {fileID: 11400000, guid: 3c94556c7bd2a447f81a8a1cbddbe808, type: 2}
+  - {fileID: 11400000, guid: fa2f2aa53eb3647298f5c0fc0d1f19fd, type: 2}
+  - {fileID: 11400000, guid: 680cfc11e41ed4e4bba20b4f4f767e41, type: 2}
+  - {fileID: 11400000, guid: f6a784234cf12422e86f844812a3c36d, type: 2}

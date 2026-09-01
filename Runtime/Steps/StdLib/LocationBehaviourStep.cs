@@ -148,10 +148,10 @@ namespace giorgiokalmund.Dora.Steps.StdLib
             if (generationPattern is BulkObjectPattern bulk)
             {
                 bulk.Clear();
-                bulk.GenerationPool.Clear();
+                bulk.generationPool.Clear();
                 foreach ((GameObject gameObject, CountTracker tracker) in requiredObjects.ToDictionary())
                 {
-                    bulk.GenerationPool.Add(gameObject, tracker.count);
+                    bulk.generationPool.Add(gameObject, tracker.count);
                 }
                 EditorUtility.SetDirty(bulk);
             }

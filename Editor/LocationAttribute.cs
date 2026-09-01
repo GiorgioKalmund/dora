@@ -25,10 +25,10 @@ namespace giorgiokalmund.Dora.Editor
         private static readonly Dictionary<int, bool> IntegrationIssue = new ();
         
         private static readonly GUIContent DropdownIcon =
-            EditorGUIUtility.IconContent("scenevis_hidden_hover@2x");
+            EditorGUIUtility.IconContent("scenevis_hidden_hover@2x", "Manual Mode");
 
         private static readonly GUIContent ManualIcon =
-            EditorGUIUtility.IconContent("scenevis_visible_hover@2x");
+            EditorGUIUtility.IconContent("scenevis_visible_hover@2x", "Automatic Mode");
         
         private const float ShowButtonWidth = 22f;
         private const float ShowButtonPadding = 2f;
