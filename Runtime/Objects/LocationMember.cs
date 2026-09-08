@@ -28,6 +28,14 @@ namespace giorgiokalmund.Dora
             var res = transform.DetermineLocation(spaceFoundation);
             if (res)
             {
+                if (spaceFoundation == null)
+                {
+                    // update reference to sfs.
+                    // this is important if we had no sfs before, DetermineLocation will find one
+                    // which we then need to re-assign back here!
+                    spaceFoundation = res.correspondingSpaceFoundation; 
+                }
+            
                 if (res != currentLocation)
                 {
                     onLocationChanged.Invoke(res);

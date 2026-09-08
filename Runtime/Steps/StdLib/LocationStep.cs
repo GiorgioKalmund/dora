@@ -28,7 +28,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         public override string GetDescription()
         {
-            return $"Visit {spaceFoundationData.GetAnchorName(anchor)}";
+            return $"Visit {spaceFoundationData?.GetAnchorName(anchor) ?? "<NO SFS DATA>"}";
         }
 
         protected override bool CanProcess(IGameplayEvent e) => e is EnteredLocationEvent;

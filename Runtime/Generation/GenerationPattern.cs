@@ -8,6 +8,7 @@ namespace giorgiokalmund.Dora.Generation
     {
         protected bool ShouldClearOnGenerate = true;
         public abstract bool CanGenerate();
+        // BUG: Drawn multiple times!!! (see https://github.com/dbrizov/NaughtyAttributes/issues/292)
         [Button]
         public abstract void Generate();
         [Button]

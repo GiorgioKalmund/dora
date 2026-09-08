@@ -47,7 +47,7 @@ namespace giorgiokalmund.Dora.Questing
         /// Represents the index of the current step if the quest is ACCEPTED, -1 otherwise.
         /// </summary>
         [SerializeField, Tooltip("The index of the current step. Is -1 if the quest is not currently accepted.")]
-        private int currentStepIdx;
+        private int currentStepIdx = -1;
 
         /// <inheritdoc cref="currentStepIdx"> </inheritdoc>
         public int CurrentStepIdx => currentStepIdx;

@@ -1,6 +1,11 @@
+using System;
+using giorgiokalmund.Dora.Utils;
 using SpaceFoundationSystem;
 using UnityEngine;
 
+/* TODO
+ This file and concept needs reworking!
+ */
 namespace giorgiokalmund.Dora.Generation
 {
     public enum GroundingMode
@@ -17,15 +22,21 @@ namespace giorgiokalmund.Dora.Generation
 
     public static class PatternGrounderHelper
     {
-        public static void Ground(this IPatternGrounder _, GameObject obj, LayerMask mask, GroundingMode mode)
+        public static void Ground(this IPatternGrounder grounder, GameObject obj, LayerMask mask, GroundingMode mode)
         {
-            if (Physics.Raycast(obj.transform.position, Vector3.down, out var hit, IPatternGrounder.MaxRaycastDistance, mask))
+            switch (mode)
             {
-                obj.transform.position = hit.point;
-            }
-            else
-            {
-                DoraLogger.LogWarning("Raycast failed!");
+                case GroundingMode.EXACT:
+                {
+                    var origin = obj.transform.position;
+                    var direction = Vector3.down;
+                    if (Physics.Raycast(origin, direction, out var hit, IPatternGrounder.MaxRaycastDistance, mask))
+                        obj.transform.position = hit.point;
+                    else
+                        DoraLogger.LogError($"[{grounder.GetType().Name}]: Grounding raycast failed!\nMask: {mask.GetDisplayName()} ('{mask.value}')\nOrigin: {origin} - Direction: {direction}\nMaxDistance: {IPatternGrounder.MaxRaycastDistance}");
+                } break;
+                default:
+                    throw new NotImplementedException($"GroundingMode {mode} is not handled by the helper!");
             }
         }
 

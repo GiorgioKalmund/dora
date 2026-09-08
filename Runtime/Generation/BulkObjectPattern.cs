@@ -16,6 +16,7 @@ namespace giorgiokalmund.Dora.Generation
         [field: ReadOnly]
         public List<string> GeneratedIds { get; protected set; }
         
+        // TODO: Make serializabledict?
         protected readonly Dictionary<string, GenerationMember> Generated = new Dictionary<string, GenerationMember>();
         
         public override void Generate()
