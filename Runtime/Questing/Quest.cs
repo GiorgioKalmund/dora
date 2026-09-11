@@ -127,6 +127,9 @@ namespace giorgiokalmund.Dora.Questing
         }
 
         [NotNull]
+        public ValidationResult Validate() => Validate(Application.isPlaying);
+        
+        [NotNull]
         public ValidationResult Validate(bool isRuntime)
         {
             int expectedCurrentIndex = -1;
@@ -232,7 +235,7 @@ namespace giorgiokalmund.Dora.Questing
             return (currentStepVisual, Steps.Length);
         }
         
-        public bool TryNextStep(out AbstractQuestStep nextStep)
+        internal bool TryNextStep(out AbstractQuestStep nextStep)
         {
             nextStep = null;
             if (IsBotchedOrCompleted)

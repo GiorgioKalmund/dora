@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using giorgiokalmund.Dora.Generation;
+using giorgiokalmund.Dora.Generation.StdLib;
 using giorgiokalmund.Dora.Questing;
 using JetBrains.Annotations;
 using NaughtyAttributes;
@@ -55,7 +56,7 @@ namespace giorgiokalmund.Dora.Steps.StdLib
             {
                 foreach ((GameObject prefab, CountTracker tracker) in objects)
                 {
-                    // TODO: SLOW!
+                    // TODO: SLOW! @Speed
                     var allMembers = FindObjectsByType<LocationMember>(); 
                     
                     // Ensure all found instances are actually contained within the location
@@ -141,10 +142,9 @@ namespace giorgiokalmund.Dora.Steps.StdLib
 
         public GenerationPattern GetCurrentPattern()
         {
-            if (generationPattern == null)
-            {
-                // pick appropriate pattern such as random grounded noise 
-            }
+            if (!generationPattern)
+                return null;
+            
             if (generationPattern is BulkObjectPattern bulk)
             {
                 bulk.Clear();
@@ -153,9 +153,26 @@ namespace giorgiokalmund.Dora.Steps.StdLib
                 {
                     bulk.generationPool.Add(gameObject, tracker.count);
                 }
+
+                if (generationPattern is ColliderObjectPattern coll)
+                {
+                    coll.anchor = SpaceFoundation.Current.GetAnchor(anchor);
+                    coll.genMode = GenerationMode.ANCHOR;
+                }
+                
                 EditorUtility.SetDirty(bulk);
             }
             return generationPattern;
+        }
+
+        public void Generate()
+        {
+            if (!GetCurrentPattern())
+            {
+                DoraLogger.LogError($"[{GetType().Name}]: Cannot generate solution for missing requirements as no GenerationPattern was provided!");
+                return;
+            }
+            ((IPatternGenerator)this).GenerateSolution();
         }
     }
 }

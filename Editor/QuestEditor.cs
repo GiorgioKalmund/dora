@@ -70,16 +70,20 @@ namespace giorgiokalmund.Dora.Editor
                     quest.ResetQuest();
                 }
                 GUILayout.EndHorizontal();
+                
+                GUILayout.Space(10);
+                GUILayout.Label("Debug Saving & Loading (JSON & FILE)", EditorStyles.boldLabel);
                 GUILayout.BeginHorizontal();
-                // TODO: Is this the UI / UX we want? no
-                if (GUILayout.Button("<b>TODO: Save</b>", QuestDrawer.TodoButton))
+                /*
+                 * TODO: Remove in favor of more flexible solution where the user can define the
+                 * serializer and storage method
+                 */ 
+                if (GUILayout.Button(">> Save"))
                 {
-                    // TODO: Allow to change path used
                     quest.Save(new JsonSerializationProvider(), new JsonFileStorageProvider(Application.persistentDataPath));
                 }
-                if (GUILayout.Button("<b>TODO: Load</b>", QuestDrawer.TodoButton))
+                if (GUILayout.Button("<< Load"))
                 {
-                    // TODO: Allow to change path used
                     quest.Load(new JsonSerializationProvider(), new JsonFileStorageProvider(Application.persistentDataPath));
                 }
                 GUILayout.EndHorizontal();

@@ -58,9 +58,12 @@ namespace giorgiokalmund.Dora
                 return;
             foreach (var quest in all)
                 quest.AddTo(this);
-            
+
             foreach (var quest in all)
+            {
                 quest.OnQuestManagerInit();
+                quest.Validate(true);
+            }
             
             onQuestStateChanged.AddListener(HandleQuestStateChanged);
         }
